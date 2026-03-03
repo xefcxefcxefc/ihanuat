@@ -130,7 +130,7 @@ public class VisitorManager {
         try {
             ClientUtils.sendCommand(client, ".ez-stopscript");
             Thread.sleep(250);
-            ClientUtils.sendCommand(client, MacroConfig.restartScript);
+            ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
         } catch (InterruptedException ignored) {
         }
         PestManager.isCleaningInProgress = false;

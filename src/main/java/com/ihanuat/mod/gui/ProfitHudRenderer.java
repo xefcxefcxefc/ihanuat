@@ -1,6 +1,7 @@
 package com.ihanuat.mod.gui;
 
 import com.ihanuat.mod.MacroConfig;
+import com.ihanuat.mod.MacroStateManager;
 import com.ihanuat.mod.modules.ProfitManager;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
@@ -49,11 +50,16 @@ public class ProfitHudRenderer {
     public static void register() {
         HudRenderCallback.EVENT.register((guiGraphics, delta) -> {
             Minecraft client = Minecraft.getInstance();
-            if (MacroConfig.showSessionProfitHud) {
-                render(guiGraphics, client, false, false);
-            }
-            if (MacroConfig.showLifetimeHud) {
-                render(guiGraphics, client, true, false);
+            boolean running = MacroStateManager.isMacroRunning();
+            boolean showAny = running || MacroConfig.showProfitHudWhileInactive;
+
+            if (showAny) {
+                if (MacroConfig.showSessionProfitHud) {
+                    render(guiGraphics, client, false, false);
+                }
+                if (MacroConfig.showLifetimeHud) {
+                    render(guiGraphics, client, true, false);
+                }
             }
         });
     }

@@ -48,7 +48,7 @@ public class GearManager {
                     Thread.sleep(400);
                     client.execute(() -> GearManager.swapToFarmingTool(client));
                     Thread.sleep(250);
-                    ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                    ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
                 } catch (Exception ignored) {
                 }
             }).start();
@@ -159,7 +159,7 @@ public class GearManager {
                     Thread.sleep(250);
                     ClientUtils.sendCommand(client, ".ez-stopscript");
                     Thread.sleep(250);
-                    ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                    ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

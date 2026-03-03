@@ -113,7 +113,7 @@ public class PestManager {
                 }
 
                 if (MacroConfig.autoEquipment) {
-                    if (cooldownSeconds > MacroConfig.autoEquipmentFarmingTime && prepSwappedForCurrentPestCycle
+                    if (cooldownSeconds > 170 && prepSwappedForCurrentPestCycle
                             && !isCleaningInProgress) {
                         prepSwappedForCurrentPestCycle = false;
                     }
@@ -130,7 +130,7 @@ public class PestManager {
                     boolean thresholdMet = (aliveCount >= MacroConfig.pestThreshold || aliveCount >= 8);
                     if (!thresholdMet) {
                         if (MacroConfig.autoEquipment) {
-                            if (cooldownSeconds <= MacroConfig.autoEquipmentFarmingTime)
+                            if (cooldownSeconds <= 170)
                                 triggerPrepSwap(client);
                         } else if (cooldownSeconds <= 3) {
                             triggerPrepSwap(client);
@@ -291,7 +291,7 @@ public class PestManager {
                 Thread.sleep(250);
                 if (isCleaningInProgress || isPrepSwapping)
                     return;
-                ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
             } catch (InterruptedException ignored) {
             }
             isCleaningInProgress = false;
@@ -355,7 +355,7 @@ public class PestManager {
 
         client.execute(() -> {
             com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
-            ClientUtils.sendCommand(client, MacroConfig.restartScript);
+            ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
         });
     }
 
@@ -548,7 +548,7 @@ public class PestManager {
                 Thread.sleep(250);
                 if (isCleaningInProgress || isPrepSwapping)
                     return;
-                ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
             } catch (Exception ignored) {
             }
         }).start();

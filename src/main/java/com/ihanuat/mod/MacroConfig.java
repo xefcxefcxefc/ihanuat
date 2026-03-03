@@ -37,7 +37,6 @@ public class MacroConfig {
             "Capsule", "Vinyl");
     public static final java.util.List<String> DEFAULT_CUSTOM_ENCHANTMENT_LEVELS = java.util.Collections.emptyList();
     public static final int DEFAULT_GEORGE_SELL_THRESHOLD = 3;
-    public static final int DEFAULT_AUTO_EQUIPMENT_FARMING_TIME = 170;
     public static final int DEFAULT_ROTATION_TIME = 500;
     public static final boolean DEFAULT_AOTV_TO_ROOF = false;
     public static final int DEFAULT_WARDROBE_SLOT_FARMING = 1;
@@ -50,7 +49,10 @@ public class MacroConfig {
     public static final int DEFAULT_BOOK_COMBINE_DELAY = 300;
     public static final int DEFAULT_BOOK_THRESHOLD = 7;
     public static final int DEFAULT_ADDITIONAL_RANDOM_DELAY = 0;
-    public static final String DEFAULT_RESTART_SCRIPT = ".ez-startscript netherwart:1";
+    public static final java.util.List<String> DEFAULT_FARM_SCRIPTS = java.util.Arrays.asList(
+            "netherwart:1", "netherwart:0", "sugarcane:classical", "sugarcane:sshape",
+            "cactus", "cocoa", "mushroom:1", "mushroom:0", "pumpkin:1");
+    public static final String DEFAULT_RESTART_SCRIPT = "netherwart:1";
     public static final int DEFAULT_GARDEN_WARP_DELAY = 1000;
     public static final int DEFAULT_REST_SCRIPTING_TIME = 30;
     public static final int DEFAULT_REST_SCRIPTING_TIME_OFFSET = 3;
@@ -63,6 +65,7 @@ public class MacroConfig {
     public static final boolean DEFAULT_SEND_DISCORD_STATUS = false;
     public static final boolean DEFAULT_PERSIST_SESSION_TIMER = true;
     public static final boolean DEFAULT_COMPACT_PROFIT_CALCULATOR = false;
+    public static final boolean DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE = false;
 
     // Pet Tracker Defaults
     public static final java.util.List<String> DEFAULT_PET_TRACKER_LIST = java.util.Arrays.asList(
@@ -97,7 +100,6 @@ public class MacroConfig {
     public static java.util.List<String> customEnchantmentLevels = new java.util.ArrayList<>(
             DEFAULT_CUSTOM_ENCHANTMENT_LEVELS);
     public static int georgeSellThreshold = DEFAULT_GEORGE_SELL_THRESHOLD;
-    public static int autoEquipmentFarmingTime = DEFAULT_AUTO_EQUIPMENT_FARMING_TIME;
     public static int rotationTime = DEFAULT_ROTATION_TIME;
     public static boolean aotvToRoof = DEFAULT_AOTV_TO_ROOF;
 
@@ -124,8 +126,43 @@ public class MacroConfig {
         return baseDelay + (int) (Math.random() * (additionalRandomDelay + 1));
     }
 
-    // Restart Script Command (sent to restart farming)
+    // Farm Script Command (sent to restart farming)
     public static String restartScript = DEFAULT_RESTART_SCRIPT;
+
+    public static String getFullRestartCommand() {
+        if (restartScript == null || restartScript.isEmpty())
+            return "";
+        if (restartScript.startsWith("/") || restartScript.startsWith(".ez-startscript"))
+            return restartScript;
+        return ".ez-startscript " + restartScript;
+    }
+
+    public static String getScriptDescription(String script) {
+        if (script == null)
+            return "";
+        switch (script) {
+            case "netherwart:1":
+                return "Wart/Crops (S-Shape)";
+            case "netherwart:0":
+                return "Wart/Crops (Vertical)";
+            case "sugarcane:classical":
+                return "Sugarcane/Flowers (Classical)";
+            case "sugarcane:sshape":
+                return "Sunflower (S-Shape)";
+            case "cactus":
+                return "Cactus";
+            case "cocoa":
+                return "Cocoa";
+            case "mushroom:1":
+                return "Mushroom (Staircase)";
+            case "mushroom:0":
+                return "Mushroom (Classical)";
+            case "pumpkin:1":
+                return "Pumpkin/Melon";
+            default:
+                return "Custom Script";
+        }
+    }
 
     // Garden Warp Delay (ms) - configurable delay after garden warp
     public static int gardenWarpDelay = DEFAULT_GARDEN_WARP_DELAY;
@@ -143,6 +180,7 @@ public class MacroConfig {
     public static boolean sendDiscordStatus = DEFAULT_SEND_DISCORD_STATUS;
     public static boolean persistSessionTimer = DEFAULT_PERSIST_SESSION_TIMER;
     public static boolean compactProfitCalculator = DEFAULT_COMPACT_PROFIT_CALCULATOR;
+    public static boolean showProfitHudWhileInactive = DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE;
 
     public static java.util.List<String> petTrackerList = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
 
@@ -247,7 +285,6 @@ public class MacroConfig {
         data.boosterCookieItems = new java.util.ArrayList<>(boosterCookieItems);
         data.customEnchantmentLevels = new java.util.ArrayList<>(customEnchantmentLevels);
         data.georgeSellThreshold = georgeSellThreshold;
-        data.autoEquipmentFarmingTime = autoEquipmentFarmingTime;
         data.rotationTime = rotationTime;
         data.aotvToRoof = aotvToRoof;
 
@@ -280,6 +317,7 @@ public class MacroConfig {
         data.rewarpEndPosSet = rewarpEndPosSet;
         data.persistSessionTimer = persistSessionTimer;
         data.compactProfitCalculator = compactProfitCalculator;
+        data.showProfitHudWhileInactive = showProfitHudWhileInactive;
 
         data.petTrackerList = new java.util.ArrayList<>(petTrackerList);
 
@@ -333,7 +371,6 @@ public class MacroConfig {
                     customEnchantmentLevels = new java.util.ArrayList<>(data.customEnchantmentLevels);
                 }
                 georgeSellThreshold = data.georgeSellThreshold;
-                autoEquipmentFarmingTime = data.autoEquipmentFarmingTime;
                 rotationTime = data.rotationTime;
                 aotvToRoof = data.aotvToRoof;
 
@@ -369,6 +406,7 @@ public class MacroConfig {
                 rewarpEndPosSet = data.rewarpEndPosSet;
                 persistSessionTimer = data.persistSessionTimer;
                 compactProfitCalculator = data.compactProfitCalculator;
+                showProfitHudWhileInactive = data.showProfitHudWhileInactive;
 
                 if (data.petTrackerList != null) {
                     petTrackerList = new java.util.ArrayList<>(data.petTrackerList);
@@ -411,7 +449,6 @@ public class MacroConfig {
         java.util.List<String> boosterCookieItems = new java.util.ArrayList<>(DEFAULT_BOOSTER_COOKIE_ITEMS);
         java.util.List<String> customEnchantmentLevels = new java.util.ArrayList<>(DEFAULT_CUSTOM_ENCHANTMENT_LEVELS);
         int georgeSellThreshold = DEFAULT_GEORGE_SELL_THRESHOLD;
-        int autoEquipmentFarmingTime = DEFAULT_AUTO_EQUIPMENT_FARMING_TIME;
         int rotationTime = DEFAULT_ROTATION_TIME;
         boolean aotvToRoof = DEFAULT_AOTV_TO_ROOF;
 
@@ -444,6 +481,7 @@ public class MacroConfig {
         boolean rewarpEndPosSet = false;
         boolean persistSessionTimer = DEFAULT_PERSIST_SESSION_TIMER;
         boolean compactProfitCalculator = DEFAULT_COMPACT_PROFIT_CALCULATOR;
+        boolean showProfitHudWhileInactive = DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE;
 
         java.util.List<String> petTrackerList = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
 

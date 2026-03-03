@@ -256,7 +256,7 @@ public class IhanuatClient implements ClientModInitializer {
                             if (PestManager.isCleaningInProgress || PestManager.isPrepSwapping)
                                 return;
 
-                            ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                            ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -387,7 +387,8 @@ public class IhanuatClient implements ClientModInitializer {
                                 client.execute(() -> MacroConfig.executePlotTpRewarp(client));
                                 Thread.sleep(1200); // Wait for warp
                                 if (MacroStateManager.getCurrentState() == MacroState.State.FARMING) {
-                                    client.execute(() -> ClientUtils.sendCommand(client, MacroConfig.restartScript));
+                                    client.execute(
+                                            () -> ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand()));
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();

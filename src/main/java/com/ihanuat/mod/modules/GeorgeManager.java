@@ -210,7 +210,7 @@ public class GeorgeManager {
                     com.ihanuat.mod.util.ClientUtils.waitForGearAndGui(client);
                     client.execute(() -> {
                         GearManager.swapToFarmingTool(client);
-                        com.ihanuat.mod.util.ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                        com.ihanuat.mod.util.ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
                     });
                 } catch (Exception ignored) {
                 }

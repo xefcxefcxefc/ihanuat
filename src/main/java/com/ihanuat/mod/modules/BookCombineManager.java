@@ -243,7 +243,7 @@ public class BookCombineManager {
                     client.execute(() -> GearManager.swapToFarmingTool(client));
                     Thread.sleep(200);
 
-                    com.ihanuat.mod.util.ClientUtils.sendCommand(client, MacroConfig.restartScript);
+                    com.ihanuat.mod.util.ClientUtils.sendCommand(client, MacroConfig.getFullRestartCommand());
                 } catch (Exception ignored) {
                 }
             }).start();

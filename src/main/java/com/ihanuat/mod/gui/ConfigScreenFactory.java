@@ -1,22 +1,10 @@
 package com.ihanuat.mod.gui;
 
 import com.ihanuat.mod.MacroConfig;
-import com.ihanuat.mod.modules.ProfitManager;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
-import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 public class ConfigScreenFactory {
 
@@ -26,21 +14,19 @@ public class ConfigScreenFactory {
                                 .setTitle(Component.literal("Ihanuat Config"))
                                 .setSavingRunnable(MacroConfig::save);
 
+                // --- General Category ---
                 ConfigCategory general = builder.getOrCreateCategory(Component.literal("General"));
+
+                general.addEntry(builder.entryBuilder()
+                                .startTextDescription(Component.literal(
+                                                "§cDisable Auto Pest, Auto Visitor, and Auto Wardrobe in Taunahi settings"))
+                                .build());
 
                 general.addEntry(builder.entryBuilder()
                                 .startBooleanToggle(Component.literal("Show Macro Status HUD"), MacroConfig.showHud)
                                 .setDefaultValue(MacroConfig.DEFAULT_SHOW_HUD)
                                 .setTooltip(Component.literal("Display the timer and macro state panel."))
                                 .setSaveConsumer(newValue -> MacroConfig.showHud = newValue)
-                                .build());
-
-                general.addEntry(builder.entryBuilder()
-                                .startEnumSelector(Component.literal("Wardrobe/Rod Swap Mode"),
-                                                MacroConfig.GearSwapMode.class,
-                                                MacroConfig.gearSwapMode)
-                                .setDefaultValue(MacroConfig.DEFAULT_GEAR_SWAP_MODE)
-                                .setSaveConsumer(newValue -> MacroConfig.gearSwapMode = newValue)
                                 .build());
 
                 general.addEntry(builder.entryBuilder()
@@ -58,47 +44,53 @@ public class ConfigScreenFactory {
                                 .build());
 
                 general.addEntry(builder.entryBuilder()
-                                .startIntSlider(Component.literal("Rotation Time (ms)"), MacroConfig.rotationTime,
-                                                100, 3000)
-                                .setDefaultValue(MacroConfig.DEFAULT_ROTATION_TIME)
-                                .setSaveConsumer(newValue -> MacroConfig.rotationTime = newValue)
-                                .build());
-
-                general.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("Pest Threshold"), MacroConfig.pestThreshold, 1, 8)
                                 .setDefaultValue(MacroConfig.DEFAULT_PEST_THRESHOLD)
                                 .setSaveConsumer(newValue -> MacroConfig.pestThreshold = newValue)
                                 .build());
 
                 general.addEntry(builder.entryBuilder()
-                                .startIntSlider(Component.literal("Visitor Threshold"), MacroConfig.visitorThreshold, 1,
-                                                5)
-                                .setDefaultValue(MacroConfig.DEFAULT_VISITOR_THRESHOLD)
-                                .setSaveConsumer(newValue -> MacroConfig.visitorThreshold = newValue)
+                                .startStringDropdownMenu(Component.literal("Farm Script Command"),
+                                                MacroConfig.restartScript)
+                                .setDefaultValue(MacroConfig.DEFAULT_RESTART_SCRIPT)
+                                .setSelections(MacroConfig.DEFAULT_FARM_SCRIPTS)
+                                .setTooltipSupplier(value -> java.util.Optional.of(new Component[] {
+                                                Component.literal("§7" + MacroConfig.getScriptDescription(value)) }))
+                                .setSaveConsumer(newValue -> MacroConfig.restartScript = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
+                // --- Delays Category ---
+                ConfigCategory delays = builder.getOrCreateCategory(Component.literal("Delays"));
+
+                delays.addEntry(builder.entryBuilder()
+                                .startIntSlider(Component.literal("Rotation Time (ms)"), MacroConfig.rotationTime,
+                                                100, 3000)
+                                .setDefaultValue(MacroConfig.DEFAULT_ROTATION_TIME)
+                                .setSaveConsumer(newValue -> MacroConfig.rotationTime = newValue)
+                                .build());
+
+                delays.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("GUI Click Delay (ms)"), MacroConfig.guiClickDelay,
                                                 100, 2000)
                                 .setDefaultValue(MacroConfig.DEFAULT_GUI_CLICK_DELAY)
                                 .setSaveConsumer(newValue -> MacroConfig.guiClickDelay = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
+                delays.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("Equipment Swap Delay (ms)"),
                                                 MacroConfig.equipmentSwapDelay, 100, 300)
                                 .setDefaultValue(MacroConfig.DEFAULT_EQUIPMENT_SWAP_DELAY)
                                 .setSaveConsumer(newValue -> MacroConfig.equipmentSwapDelay = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
+                delays.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("Rod Swap Delay (ms)"),
                                                 MacroConfig.rodSwapDelay, 50, 1000)
                                 .setDefaultValue(MacroConfig.DEFAULT_ROD_SWAP_DELAY)
                                 .setSaveConsumer(newValue -> MacroConfig.rodSwapDelay = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
+                delays.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("Additional Random Delay (0-1000ms)"),
                                                 MacroConfig.additionalRandomDelay, 0, 1000)
                                 .setDefaultValue(MacroConfig.DEFAULT_ADDITIONAL_RANDOM_DELAY)
@@ -107,13 +99,7 @@ public class ConfigScreenFactory {
                                 .setSaveConsumer(newValue -> MacroConfig.additionalRandomDelay = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
-                                .startStrField(Component.literal("Restart Script Command"), MacroConfig.restartScript)
-                                .setDefaultValue(MacroConfig.DEFAULT_RESTART_SCRIPT)
-                                .setSaveConsumer(newValue -> MacroConfig.restartScript = newValue)
-                                .build());
-
-                general.addEntry(builder.entryBuilder()
+                delays.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("Garden Warp Delay (ms)"),
                                                 MacroConfig.gardenWarpDelay,
                                                 0, 3000)
@@ -121,54 +107,115 @@ public class ConfigScreenFactory {
                                 .setSaveConsumer(newValue -> MacroConfig.gardenWarpDelay = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
-                                .startBooleanToggle(Component.literal("Auto-Visitor"), MacroConfig.autoVisitor)
-                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_VISITOR)
-                                .setSaveConsumer(newValue -> MacroConfig.autoVisitor = newValue)
+                delays.addEntry(builder.entryBuilder()
+                                .startIntSlider(Component.literal("Book Combine Delay (ms)"),
+                                                MacroConfig.bookCombineDelay, 100, 2000)
+                                .setDefaultValue(MacroConfig.DEFAULT_BOOK_COMBINE_DELAY)
+                                .setSaveConsumer(newValue -> MacroConfig.bookCombineDelay = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
-                                .startBooleanToggle(Component.literal("Auto-Equipment"), MacroConfig.autoEquipment)
-                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_EQUIPMENT)
-                                .setSaveConsumer(newValue -> MacroConfig.autoEquipment = newValue)
+                // --- Wardrobe Swap Category ---
+                ConfigCategory wardrobe = builder.getOrCreateCategory(Component.literal("Wardrobe Swap"));
+
+                wardrobe.addEntry(builder.entryBuilder()
+                                .startEnumSelector(Component.literal("Wardrobe/Rod Swap Mode"),
+                                                MacroConfig.GearSwapMode.class,
+                                                MacroConfig.gearSwapMode)
+                                .setDefaultValue(MacroConfig.DEFAULT_GEAR_SWAP_MODE)
+                                .setSaveConsumer(newValue -> MacroConfig.gearSwapMode = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
-                                .startIntSlider(Component.literal(
-                                                "Auto-Equipment Timing (Leave on 170 unless you know what you're doing) (sec)"),
-                                                MacroConfig.autoEquipmentFarmingTime, 1, 300)
-                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_EQUIPMENT_FARMING_TIME)
-                                .setSaveConsumer(newValue -> MacroConfig.autoEquipmentFarmingTime = newValue)
-                                .build());
-
-                general.addEntry(builder.entryBuilder()
-                                .startBooleanToggle(Component.literal("Armor Swap for Visitor"),
-                                                MacroConfig.armorSwapVisitor)
-                                .setDefaultValue(MacroConfig.DEFAULT_ARMOR_SWAP_VISITOR)
-                                .setSaveConsumer(newValue -> MacroConfig.armorSwapVisitor = newValue)
-                                .build());
-
-                general.addEntry(builder.entryBuilder()
+                wardrobe.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("Wardrobe Slot: Farming"),
                                                 MacroConfig.wardrobeSlotFarming, 1, 9)
                                 .setDefaultValue(MacroConfig.DEFAULT_WARDROBE_SLOT_FARMING)
                                 .setSaveConsumer(newValue -> MacroConfig.wardrobeSlotFarming = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
+                wardrobe.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("Wardrobe Slot: Pest"), MacroConfig.wardrobeSlotPest,
                                                 1, 9)
                                 .setDefaultValue(MacroConfig.DEFAULT_WARDROBE_SLOT_PEST)
                                 .setSaveConsumer(newValue -> MacroConfig.wardrobeSlotPest = newValue)
                                 .build());
 
-                general.addEntry(builder.entryBuilder()
+                wardrobe.addEntry(builder.entryBuilder()
                                 .startIntSlider(Component.literal("Wardrobe Slot: Visitor"),
                                                 MacroConfig.wardrobeSlotVisitor, 1, 9)
                                 .setDefaultValue(MacroConfig.DEFAULT_WARDROBE_SLOT_VISITOR)
                                 .setSaveConsumer(newValue -> MacroConfig.wardrobeSlotVisitor = newValue)
                                 .build());
 
+                // --- Equipment Swap Category ---
+                ConfigCategory equipment = builder.getOrCreateCategory(Component.literal("Equipment Swap"));
+
+                equipment.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Auto-Equipment"), MacroConfig.autoEquipment)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_EQUIPMENT)
+                                .setSaveConsumer(newValue -> MacroConfig.autoEquipment = newValue)
+                                .build());
+
+                // --- Auto Visitor Category ---
+                ConfigCategory autoVisitorCat = builder.getOrCreateCategory(Component.literal("Auto Visitor"));
+
+                autoVisitorCat.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Auto-Visitor"), MacroConfig.autoVisitor)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_VISITOR)
+                                .setSaveConsumer(newValue -> MacroConfig.autoVisitor = newValue)
+                                .build());
+
+                autoVisitorCat.addEntry(builder.entryBuilder()
+                                .startIntSlider(Component.literal("Visitor Threshold"), MacroConfig.visitorThreshold, 1,
+                                                5)
+                                .setDefaultValue(MacroConfig.DEFAULT_VISITOR_THRESHOLD)
+                                .setSaveConsumer(newValue -> MacroConfig.visitorThreshold = newValue)
+                                .build());
+
+                autoVisitorCat.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Armor Swap for Visitor"),
+                                                MacroConfig.armorSwapVisitor)
+                                .setDefaultValue(MacroConfig.DEFAULT_ARMOR_SWAP_VISITOR)
+                                .setSaveConsumer(newValue -> MacroConfig.armorSwapVisitor = newValue)
+                                .build());
+
+                // --- Auto George Category ---
+                ConfigCategory autoGeorge = builder.getOrCreateCategory(Component.literal("Auto George"));
+
+                autoGeorge.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component
+                                                .literal("Auto George Sell (requires abiphone with George contact)"),
+                                                MacroConfig.autoGeorgeSell)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_GEORGE_SELL)
+                                .setSaveConsumer(newValue -> MacroConfig.autoGeorgeSell = newValue)
+                                .build());
+
+                autoGeorge.addEntry(builder.entryBuilder()
+                                .startIntSlider(Component.literal("George Sell Threshold (Pets)"),
+                                                MacroConfig.georgeSellThreshold, 1, 35)
+                                .setDefaultValue(MacroConfig.DEFAULT_GEORGE_SELL_THRESHOLD)
+                                .setSaveConsumer(newValue -> MacroConfig.georgeSellThreshold = newValue)
+                                .build());
+
+                // --- Auto Sell Category ---
+                ConfigCategory autoSellCat = builder.getOrCreateCategory(Component.literal("Auto Sell"));
+
+                autoSellCat.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component
+                                                .literal("Custom Autosell (triggers on opening booster cookie menu)"),
+                                                MacroConfig.autoBoosterCookie)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_BOOSTER_COOKIE)
+                                .setSaveConsumer(newValue -> MacroConfig.autoBoosterCookie = newValue)
+                                .build());
+
+                autoSellCat.addEntry(builder.entryBuilder()
+                                .startStrList(Component.literal("Booster Cookie Autosell Items"),
+                                                MacroConfig.boosterCookieItems)
+                                .setDefaultValue(MacroConfig.DEFAULT_BOOSTER_COOKIE_ITEMS)
+                                .setExpanded(true)
+                                .setSaveConsumer(newValue -> MacroConfig.boosterCookieItems = newValue)
+                                .build());
+
+                // --- Profit Calculator Category (Restored from previous step) ---
                 ConfigCategory profitTracker = builder.getOrCreateCategory(Component.literal("Profit Calculator"));
 
                 profitTracker.addEntry(builder.entryBuilder()
@@ -205,6 +252,15 @@ public class ConfigScreenFactory {
                                 .build());
 
                 profitTracker.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Show Profit HUDs While Inactive"),
+                                                MacroConfig.showProfitHudWhileInactive)
+                                .setDefaultValue(MacroConfig.DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE)
+                                .setTooltip(Component.literal(
+                                                "If disabled, profit HUDs will only be visible when the macro is running."))
+                                .setSaveConsumer(newValue -> MacroConfig.showProfitHudWhileInactive = newValue)
+                                .build());
+
+                profitTracker.addEntry(builder.entryBuilder()
                                 .startStrList(Component.literal("Pet Tracker List"),
                                                 MacroConfig.petTrackerList)
                                 .setDefaultValue(MacroConfig.DEFAULT_PET_TRACKER_LIST)
@@ -214,65 +270,7 @@ public class ConfigScreenFactory {
                                 .setSaveConsumer(newValue -> MacroConfig.petTrackerList = newValue)
                                 .build());
 
-                profitTracker.addEntry(new ButtonEntry(
-                                Component.literal("Reset Session"),
-                                Component.literal("Clears drops AND the timer for the current session."),
-                                button -> {
-                                        com.ihanuat.mod.MacroStateManager.resetSession();
-                                        Minecraft client = Minecraft.getInstance();
-                                        if (client.player != null) {
-                                                client.player.displayClientMessage(
-                                                                Component.literal(
-                                                                                "\u00A7aSession has been reset!"),
-                                                                true);
-                                        }
-                                }));
-
-                profitTracker.addEntry(new ButtonEntry(
-                                Component.literal("Reset Lifetime Profit"),
-                                Component.literal("PERMANENTLY clears all lifetime tracked drops."),
-                                button -> {
-                                        ProfitManager.resetLifetime();
-                                        Minecraft client = Minecraft.getInstance();
-                                        if (client.player != null) {
-                                                client.player.displayClientMessage(
-                                                                Component.literal(
-                                                                                "\u00A7cLifetime Profit has been reset!"),
-                                                                true);
-                                        }
-                                }));
-
-                profitTracker.addEntry(builder.entryBuilder()
-                                .startBooleanToggle(Component
-                                                .literal("Auto George Sell (requires abiphone with George contact)"),
-                                                MacroConfig.autoGeorgeSell)
-                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_GEORGE_SELL)
-                                .setSaveConsumer(newValue -> MacroConfig.autoGeorgeSell = newValue)
-                                .build());
-
-                profitTracker.addEntry(builder.entryBuilder()
-                                .startIntSlider(Component.literal("George Sell Threshold (Pets)"),
-                                                MacroConfig.georgeSellThreshold, 1, 35)
-                                .setDefaultValue(MacroConfig.DEFAULT_GEORGE_SELL_THRESHOLD)
-                                .setSaveConsumer(newValue -> MacroConfig.georgeSellThreshold = newValue)
-                                .build());
-
-                profitTracker.addEntry(builder.entryBuilder()
-                                .startBooleanToggle(Component
-                                                .literal("Custom Autosell (triggers on opening booster cookie menu)"),
-                                                MacroConfig.autoBoosterCookie)
-                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_BOOSTER_COOKIE)
-                                .setSaveConsumer(newValue -> MacroConfig.autoBoosterCookie = newValue)
-                                .build());
-
-                profitTracker.addEntry(builder.entryBuilder()
-                                .startStrList(Component.literal("Booster Cookie Autosell Items"),
-                                                MacroConfig.boosterCookieItems)
-                                .setDefaultValue(MacroConfig.DEFAULT_BOOSTER_COOKIE_ITEMS)
-                                .setExpanded(true)
-                                .setSaveConsumer(newValue -> MacroConfig.boosterCookieItems = newValue)
-                                .build());
-
+                // --- Dynamic Rest Category ---
                 ConfigCategory dynamicRest = builder.getOrCreateCategory(Component.literal("Dynamic Rest"));
                 dynamicRest.addEntry(builder.entryBuilder()
                                 .startIntField(Component.literal("Scripting Time (Minutes)"),
@@ -301,18 +299,12 @@ public class ConfigScreenFactory {
                                 .setSaveConsumer(newValue -> MacroConfig.restBreakTimeOffset = newValue)
                                 .build());
 
+                // --- QOL Category ---
                 ConfigCategory qol = builder.getOrCreateCategory(Component.literal("QOL"));
                 qol.addEntry(builder.entryBuilder()
                                 .startBooleanToggle(Component.literal("Auto-Book Combine"), MacroConfig.autoBookCombine)
                                 .setDefaultValue(MacroConfig.DEFAULT_AUTO_BOOK_COMBINE)
                                 .setSaveConsumer(newValue -> MacroConfig.autoBookCombine = newValue)
-                                .build());
-
-                qol.addEntry(builder.entryBuilder()
-                                .startIntSlider(Component.literal("Book Combine Delay (ms)"),
-                                                MacroConfig.bookCombineDelay, 100, 2000)
-                                .setDefaultValue(MacroConfig.DEFAULT_BOOK_COMBINE_DELAY)
-                                .setSaveConsumer(newValue -> MacroConfig.bookCombineDelay = newValue)
                                 .build());
 
                 qol.addEntry(builder.entryBuilder()
@@ -372,74 +364,6 @@ public class ConfigScreenFactory {
                                 .setSaveConsumer(newValue -> MacroConfig.discordStatusUpdateTime = newValue)
                                 .build());
 
-                qol.addEntry(new ButtonEntry(
-                                Component.literal("Capture Rewarp End Position"),
-                                Component.literal("Captures your current position as the trigger for PlotTP Rewarp."),
-                                button -> {
-                                        Minecraft client = Minecraft.getInstance();
-                                        if (client.player != null) {
-                                                MacroConfig.rewarpEndX = client.player.getX();
-                                                MacroConfig.rewarpEndY = client.player.getY();
-                                                MacroConfig.rewarpEndZ = client.player.getZ();
-                                                MacroConfig.rewarpEndPosSet = true;
-                                                MacroConfig.save();
-                                                client.player.displayClientMessage(
-                                                                Component.literal(
-                                                                                "\u00A7aRewarp End Position captured and saved!"),
-                                                                true);
-                                        }
-                                }));
-
                 return builder.build();
-        }
-
-        private static class ButtonEntry extends TooltipListEntry<Object> {
-                private final Button button;
-                private final Component fieldName;
-
-                @SuppressWarnings("deprecation")
-                public ButtonEntry(Component fieldName, Component tooltip, Button.OnPress onPress) {
-                        super(fieldName, () -> Optional.of(new Component[] { tooltip }));
-                        this.fieldName = fieldName;
-                        this.button = Button.builder(fieldName, onPress).bounds(0, 0, 150, 20).build();
-                }
-
-                @Override
-                public void render(@NotNull GuiGraphics graphics, int index, int y, int x, int entryWidth,
-                                int entryHeight,
-                                int mouseX,
-                                int mouseY, boolean isHovered, float tickDelta) {
-                        super.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isHovered,
-                                        tickDelta);
-                        this.button.setX(x + entryWidth - 160);
-                        this.button.setY(y);
-                        this.button.setWidth(150);
-                        this.button.render(graphics, mouseX, mouseY, tickDelta);
-                        graphics.drawString(Minecraft.getInstance().font, fieldName, x, y + 6, 0xFFFFFF);
-                }
-
-                @Override
-                public @NotNull List<? extends GuiEventListener> children() {
-                        return Collections.singletonList(button);
-                }
-
-                @Override
-                public @NotNull List<? extends NarratableEntry> narratables() {
-                        return Collections.singletonList(button);
-                }
-
-                @Override
-                public @NotNull Object getValue() {
-                        return "";
-                }
-
-                @Override
-                public @NotNull Optional<Object> getDefaultValue() {
-                        return Optional.empty();
-                }
-
-                @Override
-                public void save() {
-                }
         }
 }
