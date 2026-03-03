@@ -67,6 +67,11 @@ public class MacroConfig {
     public static final boolean DEFAULT_COMPACT_PROFIT_CALCULATOR = false;
     public static final boolean DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE = false;
     public static final boolean DEFAULT_HIDE_FILTERED_CHAT = true;
+    public static final boolean DEFAULT_AUTO_DROP_JUNK = false;
+    public static final java.util.List<String> DEFAULT_JUNK_ITEMS = java.util.Arrays.asList(
+            "Fruit Bowl", "Farming Exp Boost", "Sunder VI");
+    public static final String DEFAULT_DROP_JUNK_PLOT_TP = "0";
+    public static final int DEFAULT_JUNK_THRESHOLD = 3;
 
     // Pet Tracker Defaults
     public static final java.util.List<String> DEFAULT_PET_TRACKER_LIST = java.util.Arrays.asList(
@@ -183,6 +188,10 @@ public class MacroConfig {
     public static boolean compactProfitCalculator = DEFAULT_COMPACT_PROFIT_CALCULATOR;
     public static boolean showProfitHudWhileInactive = DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE;
     public static boolean hideFilteredChat = DEFAULT_HIDE_FILTERED_CHAT;
+    public static boolean autoDropJunk = DEFAULT_AUTO_DROP_JUNK;
+    public static java.util.List<String> junkItems = new java.util.ArrayList<>(DEFAULT_JUNK_ITEMS);
+    public static String dropJunkPlotTp = DEFAULT_DROP_JUNK_PLOT_TP;
+    public static int junkThreshold = DEFAULT_JUNK_THRESHOLD;
 
     public static java.util.List<String> petTrackerList = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
 
@@ -321,6 +330,10 @@ public class MacroConfig {
         data.compactProfitCalculator = compactProfitCalculator;
         data.showProfitHudWhileInactive = showProfitHudWhileInactive;
         data.hideFilteredChat = hideFilteredChat;
+        data.autoDropJunk = autoDropJunk;
+        data.junkItems = new java.util.ArrayList<>(junkItems);
+        data.dropJunkPlotTp = dropJunkPlotTp;
+        data.junkThreshold = junkThreshold;
 
         data.petTrackerList = new java.util.ArrayList<>(petTrackerList);
 
@@ -411,6 +424,14 @@ public class MacroConfig {
                 compactProfitCalculator = data.compactProfitCalculator;
                 showProfitHudWhileInactive = data.showProfitHudWhileInactive;
                 hideFilteredChat = data.hideFilteredChat;
+                autoDropJunk = data.autoDropJunk;
+                if (data.junkItems != null) {
+                    junkItems = new java.util.ArrayList<>(data.junkItems);
+                }
+                if (data.dropJunkPlotTp != null) {
+                    dropJunkPlotTp = data.dropJunkPlotTp;
+                }
+                junkThreshold = data.junkThreshold;
 
                 if (data.petTrackerList != null) {
                     petTrackerList = new java.util.ArrayList<>(data.petTrackerList);
@@ -487,6 +508,10 @@ public class MacroConfig {
         boolean compactProfitCalculator = DEFAULT_COMPACT_PROFIT_CALCULATOR;
         boolean showProfitHudWhileInactive = DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE;
         boolean hideFilteredChat = DEFAULT_HIDE_FILTERED_CHAT;
+        boolean autoDropJunk = DEFAULT_AUTO_DROP_JUNK;
+        java.util.List<String> junkItems = new java.util.ArrayList<>(DEFAULT_JUNK_ITEMS);
+        String dropJunkPlotTp = DEFAULT_DROP_JUNK_PLOT_TP;
+        int junkThreshold = DEFAULT_JUNK_THRESHOLD;
 
         java.util.List<String> petTrackerList = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
 

@@ -222,7 +222,7 @@ public class PestManager {
 
     }
 
-    static void performUnfly(Minecraft client) throws InterruptedException {
+    public static void performUnfly(Minecraft client) throws InterruptedException {
         if (client.player == null)
             return;
 
@@ -254,6 +254,8 @@ public class PestManager {
             return;
 
         try {
+            // Already handled in handlePestCleaningFinished but just in case it's called
+            // from elsewhere
             if (MacroConfig.unflyMode == MacroConfig.UnflyMode.SNEAK) {
                 performUnfly(client);
                 Thread.sleep(150);

@@ -165,7 +165,9 @@ public class BookCombineManager {
 
         if (GearManager.isSwappingWardrobe || GearManager.isSwappingEquipment ||
                 PestManager.isCleaningInProgress || PestManager.prepSwappedForCurrentPestCycle ||
-                GeorgeManager.isSelling || GeorgeManager.isPreparingToSell)
+                GeorgeManager.isSelling || GeorgeManager.isPreparingToSell ||
+                JunkManager.isDropping || JunkManager.isPreparingToDrop ||
+                (JunkManager.countJunkItems(client) >= MacroConfig.junkThreshold))
             return;
 
         if (com.ihanuat.mod.MacroStateManager.getCurrentState() != com.ihanuat.mod.MacroState.State.FARMING)
@@ -255,14 +257,30 @@ public class BookCombineManager {
         for (int i = 0; i < 36; i++) {
             ItemStack stack = client.player.getInventory().getItem(i);
             if (!stack.isEmpty() && stack.getItem().toString().toLowerCase().contains("enchanted_book")) {
-                String name = stack.getHoverName().getString().toLowerCase();
-                if (!name.contains("sunder") && !name.contains("pesterminator 5")
-                        && !name.contains("pesterminator v")) {
+                if (!isExemptBook(stack)) {
                     count++;
                 }
             }
         }
         return count;
+    }
+
+    private static boolean isExemptBook(ItemStack stack) {
+        String name = stack.getHoverName().getString().toLowerCase();
+        if (name.contains("sunder") || name.contains("pesterminator 5") || name.contains("pesterminator v")) {
+            return true;
+        }
+
+        ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore != null) {
+            for (Component line : lore.lines()) {
+                String text = line.getString().toLowerCase();
+                if (text.contains("sunder") || text.contains("pesterminator 5") || text.contains("pesterminator v")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -284,6 +302,9 @@ public class BookCombineManager {
 
             ItemStack stack = slot.getItem();
             if (!stack.getItem().toString().toLowerCase().contains("enchanted_book"))
+                continue;
+
+            if (isExemptBook(stack))
                 continue;
 
             String key = getBookKey(stack);

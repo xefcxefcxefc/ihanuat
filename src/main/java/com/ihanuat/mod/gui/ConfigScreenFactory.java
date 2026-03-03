@@ -308,12 +308,6 @@ public class ConfigScreenFactory {
                                 .build());
 
                 qol.addEntry(builder.entryBuilder()
-                                .startBooleanToggle(Component.literal("Chat Cleanup"), MacroConfig.hideFilteredChat)
-                                .setDefaultValue(MacroConfig.DEFAULT_HIDE_FILTERED_CHAT)
-                                .setSaveConsumer(newValue -> MacroConfig.hideFilteredChat = newValue)
-                                .build());
-
-                qol.addEntry(builder.entryBuilder()
                                 .startStrList(Component.literal("Custom Enchantment Max Levels"),
                                                 MacroConfig.customEnchantmentLevels)
                                 .setDefaultValue(MacroConfig.DEFAULT_CUSTOM_ENCHANTMENT_LEVELS)
@@ -327,6 +321,42 @@ public class ConfigScreenFactory {
                                                 MacroConfig.bookThreshold, 1, 35)
                                 .setDefaultValue(MacroConfig.DEFAULT_BOOK_THRESHOLD)
                                 .setSaveConsumer(newValue -> MacroConfig.bookThreshold = newValue)
+                                .build());
+
+                qol.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Chat Cleanup"), MacroConfig.hideFilteredChat)
+                                .setDefaultValue(MacroConfig.DEFAULT_HIDE_FILTERED_CHAT)
+                                .setSaveConsumer(newValue -> MacroConfig.hideFilteredChat = newValue)
+                                .build());
+
+                qol.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Auto-Drop Junk"), MacroConfig.autoDropJunk)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_DROP_JUNK)
+                                .setSaveConsumer(newValue -> MacroConfig.autoDropJunk = newValue)
+                                .build());
+
+                qol.addEntry(builder.entryBuilder()
+                                .startStrList(Component.literal("Junk Items List"),
+                                                MacroConfig.junkItems)
+                                .setDefaultValue(MacroConfig.DEFAULT_JUNK_ITEMS)
+                                .setTooltip(Component.literal("Items to automatically drop from inventory."))
+                                .setExpanded(true)
+                                .setSaveConsumer(newValue -> MacroConfig.junkItems = newValue)
+                                .build());
+
+                qol.addEntry(builder.entryBuilder()
+                                .startStrField(Component.literal("Drop Junk PlotTP"), MacroConfig.dropJunkPlotTp)
+                                .setDefaultValue(MacroConfig.DEFAULT_DROP_JUNK_PLOT_TP)
+                                .setSaveConsumer(newValue -> MacroConfig.dropJunkPlotTp = newValue)
+                                .build());
+
+                qol.addEntry(builder.entryBuilder()
+                                .startIntSlider(Component.literal("Junk Threshold (Items)"),
+                                                MacroConfig.junkThreshold, 1, 35)
+                                .setDefaultValue(MacroConfig.DEFAULT_JUNK_THRESHOLD)
+                                .setTooltip(Component.literal(
+                                                "Triggers the drop sequence after this many junk items accumulate."))
+                                .setSaveConsumer(newValue -> MacroConfig.junkThreshold = newValue)
                                 .build());
 
                 qol.addEntry(builder.entryBuilder()

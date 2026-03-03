@@ -12,6 +12,7 @@ import com.ihanuat.mod.modules.BoosterCookieManager;
 import com.ihanuat.mod.modules.BookCombineManager;
 import com.ihanuat.mod.modules.RotationManager;
 import com.ihanuat.mod.modules.VisitorManager;
+import com.ihanuat.mod.modules.JunkManager;
 import com.ihanuat.mod.modules.ProfitManager;
 import com.ihanuat.mod.util.ClientUtils;
 import net.fabricmc.api.ClientModInitializer;
@@ -230,6 +231,7 @@ public class IhanuatClient implements ClientModInitializer {
                     GearManager.reset();
                     GeorgeManager.reset();
                     BookCombineManager.reset();
+                    JunkManager.reset();
                     RecoveryManager.reset();
                     MacroStateManager.setCurrentState(MacroState.State.FARMING);
                     ProfitManager.startStartupPriceFetch();
@@ -291,10 +293,13 @@ public class IhanuatClient implements ClientModInitializer {
                     BoosterCookieManager.handleBoosterCookieMenu(client, currentScreen);
                 if (client.screen == currentScreen)
                     BookCombineManager.handleAnvilMenu(client, currentScreen);
+                if (client.screen == currentScreen)
+                    JunkManager.handleInventoryMenu(client, currentScreen);
             }
 
             GeorgeManager.update(client);
             BookCombineManager.update(client);
+            JunkManager.update(client);
 
             DynamicRestManager.update(client);
             RestartManager.update(client);
