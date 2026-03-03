@@ -78,14 +78,11 @@ public class VisitorManager {
                 client.player.displayClientMessage(Component.literal(
                         "\u00A7eSwapping to Visitor Wardrobe (Slot " + MacroConfig.wardrobeSlotVisitor + ")..."), true);
                 client.execute(() -> GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotVisitor));
-                try {
-                    Thread.sleep(400);
-                } catch (InterruptedException ignored) {
-                }
+                ClientUtils.waitForWardrobeGui(client);
             }
             ClientUtils.waitForGearAndGui(client);
             com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
-            com.ihanuat.mod.util.CommandUtils.startScript(client, "misc:visitor", 0);
+            com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:visitor", 0);
             PestManager.isCleaningInProgress = false;
             return;
         }
@@ -103,21 +100,12 @@ public class VisitorManager {
             client.player.displayClientMessage(Component.literal(
                     "§eRestoring Farming Wardrobe (Slot " + MacroConfig.wardrobeSlotFarming + ")..."), true);
             client.execute(() -> GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotFarming));
-            try {
-                Thread.sleep(400);
-            } catch (InterruptedException ignored) {
-            }
+            ClientUtils.waitForWardrobeGui(client);
         }
 
         ClientUtils.waitForGearAndGui(client);
 
-        if (MacroConfig.autoEquipment) {
-            GearManager.ensureEquipment(client, true); // Restore farming gear
-            try {
-                Thread.sleep(400);
-            } catch (InterruptedException ignored) {
-            }
-        }
+        ClientUtils.waitForEquipmentGui(client);
 
         ClientUtils.waitForGearAndGui(client);
         client.player.displayClientMessage(Component.literal("\u00A7aRestarting farming script..."),

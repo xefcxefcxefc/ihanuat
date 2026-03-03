@@ -199,15 +199,56 @@ public class ClientUtils {
             while (com.ihanuat.mod.modules.GearManager.isSwappingEquipment)
                 Thread.sleep(50);
 
-            // Final check for any open GUI (wardrobe, equipment, or any other menu)
+            // Check for any open GUI (wardrobe, equipment, or any other menu)
             long guiStart = System.currentTimeMillis();
             while (client.screen != null && System.currentTimeMillis() - guiStart < 5000) {
                 Thread.sleep(100);
             }
 
             // Small safety delay after GUI is gone
-            Thread.sleep(400);
+            Thread.sleep(250);
         } catch (InterruptedException ignored) {
+        }
+    }
+
+    public static void waitForWardrobeGui(Minecraft client) {
+        try {
+            long start = System.currentTimeMillis();
+            while (!com.ihanuat.mod.modules.GearManager.wardrobeGuiDetected
+                    && System.currentTimeMillis() - start < 5000) {
+                Thread.sleep(50);
+            }
+        } catch (InterruptedException ignored) {
+        }
+    }
+
+    public static void waitForEquipmentGui(Minecraft client) {
+        try {
+            long start = System.currentTimeMillis();
+            while (!com.ihanuat.mod.modules.GearManager.equipmentGuiDetected
+                    && System.currentTimeMillis() - start < 5000) {
+                Thread.sleep(50);
+            }
+        } catch (InterruptedException ignored) {
+        }
+    }
+
+    public static void waitForYChange(Minecraft client, double startY, long timeoutMs) {
+        if (client.player == null)
+            return;
+
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            double currentY = client.player.getY();
+            if (Math.abs(currentY - startY) > 1) {
+                client.player.displayClientMessage(Component.literal("§9[Debug] AOTV teleport successful"), false);
+                return;
+            }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ignored) {
+                break;
+            }
         }
     }
 

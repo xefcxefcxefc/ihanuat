@@ -200,7 +200,7 @@ public class PestManager {
 
                     ClientUtils.waitForGearAndGui(client);
                     com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
-                    com.ihanuat.mod.util.CommandUtils.startScript(client, "misc:visitor", 0);
+                    com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:visitor", 0);
                     isCleaningInProgress = false;
                     return;
                 }
@@ -273,7 +273,7 @@ public class PestManager {
 
                 ClientUtils.waitForGearAndGui(client);
                 com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
-                com.ihanuat.mod.util.CommandUtils.startScript(client, "misc:visitor", 0);
+                com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:visitor", 0);
                 isCleaningInProgress = false;
                 return;
             }
@@ -318,7 +318,7 @@ public class PestManager {
 
                 if (MacroConfig.autoEquipment) {
                     GearManager.ensureEquipment(client, false);
-                    Thread.sleep(375);
+                    ClientUtils.waitForEquipmentGui(client);
                     while (GearManager.isSwappingEquipment && !isCleaningInProgress)
                         Thread.sleep(50);
                     Thread.sleep(250);
@@ -384,7 +384,7 @@ public class PestManager {
                         client.player.displayClientMessage(Component.literal(
                                 "§eRestoring Farming Wardrobe (Slot " + targetSlot + ") for Vacuuming..."), true);
                         client.execute(() -> GearManager.ensureWardrobeSlot(client, targetSlot));
-                        Thread.sleep(400);
+                        ClientUtils.waitForWardrobeGui(client);
                         while (GearManager.isSwappingWardrobe)
                             Thread.sleep(50);
                         while (GearManager.wardrobeCleanupTicks > 0)
@@ -399,7 +399,7 @@ public class PestManager {
                 if (MacroConfig.autoEquipment) {
                     // Always try to ensures farming gear for vacuuming
                     GearManager.ensureEquipment(client, true);
-                    Thread.sleep(400);
+                    ClientUtils.waitForEquipmentGui(client);
                     while (GearManager.isSwappingEquipment)
                         Thread.sleep(50);
                     Thread.sleep(250);
@@ -415,7 +415,7 @@ public class PestManager {
                     client.player.displayClientMessage(
                             Component.literal("§dBonus is INACTIVE! Triggering Phillip reactivation..."), true);
                     isReactivatingBonus = true;
-                    com.ihanuat.mod.util.CommandUtils.startScript(client, "misc:pestCleaner", 0);
+                    com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 0);
                     return;
                 }
 
@@ -480,13 +480,19 @@ public class PestManager {
                             }
 
                             if (aotvSlot < 9) {
+                                // Capture start Y for teleport verification
+                                double startY = client.player.getY();
+
                                 // Small random hesitation before right-clicking (50–130ms)
                                 Thread.sleep(50 + (long) (Math.random() * 80));
                                 client.execute(() -> client.gameMode.useItem(client.player,
                                         net.minecraft.world.InteractionHand.MAIN_HAND));
 
-                                // Randomize shift release delay too (80–160ms)
-                                Thread.sleep(80 + (long) (Math.random() * 80));
+                                // Wait for AOTV to actually teleport us (Y change)
+                                ClientUtils.waitForYChange(client, startY, 1500);
+
+                                // Randomize shift release delay slightly (40–100ms)
+                                Thread.sleep(40 + (long) (Math.random() * 60));
                                 isSneakingForAotv = false;
                                 client.execute(() -> client.options.keyShift.setDown(false));
 
@@ -528,7 +534,7 @@ public class PestManager {
                     // Trigger pest cleaning sequence immediately
                     com.ihanuat.mod.util.CommandUtils.stopScript(client, 50); // Minimal delay
                     GearManager.swapToFarmingToolSync(client);
-                    com.ihanuat.mod.util.CommandUtils.startScript(client, "misc:pestCleaner", 0);
+                    com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 0);
                 } catch (InterruptedException ignored) {
                 }
             } catch (Exception e) {
@@ -569,7 +575,7 @@ public class PestManager {
                 try {
                     com.ihanuat.mod.util.CommandUtils.stopScript(client, MacroConfig.getRandomizedDelay(250));
                     com.ihanuat.mod.util.CommandUtils.plotTp(client, currentInfestedPlot);
-                    com.ihanuat.mod.util.CommandUtils.startScript(client, "misc:pestCleaner", 250);
+                    com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 250);
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {

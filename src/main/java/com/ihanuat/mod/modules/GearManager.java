@@ -37,6 +37,14 @@ public class GearManager {
         wardrobeCleanupTicks = 0;
         trackedWardrobeSlot = -1;
         trackedIsPestGear = null;
+        wardrobeGuiDetected = false;
+        equipmentGuiDetected = false;
+    }
+
+    public static boolean wardrobeGuiDetected = false;
+    public static boolean equipmentGuiDetected = false;
+
+    public static void triggerPrepSwap(Minecraft client) {
         isHoldingRodUse = false;
     }
 
@@ -57,6 +65,7 @@ public class GearManager {
 
         targetWardrobeSlot = slot;
         isSwappingWardrobe = true;
+        wardrobeGuiDetected = false;
         wardrobeInteractionTime = 0;
         wardrobeInteractionStage = 0;
         shouldRestartFarmingAfterSwap = true;
@@ -65,6 +74,7 @@ public class GearManager {
             try {
                 Thread.sleep(375);
                 client.execute(() -> ClientUtils.sendCommand(client, "/wardrobe"));
+                ClientUtils.waitForWardrobeGui(client);
             } catch (Exception ignored) {
             }
         }).start();
@@ -75,6 +85,7 @@ public class GearManager {
             return;
         targetWardrobeSlot = slot;
         isSwappingWardrobe = true;
+        wardrobeGuiDetected = false;
         wardrobeInteractionTime = 0;
         wardrobeInteractionStage = 0;
         ClientUtils.sendCommand(client, "/wardrobe");
@@ -88,9 +99,15 @@ public class GearManager {
         if (now - wardrobeInteractionTime < MacroConfig.getRandomizedDelay(MacroConfig.guiClickDelay))
             return;
 
-        String title = screen.getTitle().getString();
-        if (!title.contains("Wardrobe"))
+        String title = screen.getTitle().getString().toLowerCase();
+        if (!title.contains("wardrobe"))
             return;
+
+        if (!wardrobeGuiDetected) {
+            wardrobeGuiDetected = true;
+            client.player.displayClientMessage(Component.literal("§9[Debug] Wardrobe GUI detected"), false);
+            wardrobeInteractionTime = System.currentTimeMillis();
+        }
 
         if (wardrobeInteractionStage == 0) {
             int slotIdx = 35 + targetWardrobeSlot;
@@ -185,6 +202,7 @@ public class GearManager {
     public static void ensureEquipment(Minecraft client, boolean toFarming) {
         swappingToFarmingGear = toFarming;
         isSwappingEquipment = true;
+        equipmentGuiDetected = false;
         equipmentInteractionTime = 0;
         equipmentInteractionStage = 0;
         equipmentTargetIndex = 0;
@@ -199,9 +217,15 @@ public class GearManager {
         if (now - equipmentInteractionTime < MacroConfig.getRandomizedDelay(MacroConfig.equipmentSwapDelay))
             return;
 
-        String title = screen.getTitle().getString();
-        if (!title.contains("Equipment"))
+        String title = screen.getTitle().getString().toLowerCase();
+        if (!title.contains("equipment"))
             return;
+
+        if (!equipmentGuiDetected) {
+            equipmentGuiDetected = true;
+            client.player.displayClientMessage(Component.literal("§9[Debug] Equipment GUI detected"), false);
+            equipmentInteractionTime = System.currentTimeMillis();
+        }
 
         // Necklace, Cloak/Vest, Belt, Hand (Gloves/Bracelet/Gauntlet)
         int[] guiSlots = { 10, 19, 28, 37 };
