@@ -308,6 +308,12 @@ public class ConfigScreenFactory {
                                 .build());
 
                 qol.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Chat Cleanup"), MacroConfig.hideFilteredChat)
+                                .setDefaultValue(MacroConfig.DEFAULT_HIDE_FILTERED_CHAT)
+                                .setSaveConsumer(newValue -> MacroConfig.hideFilteredChat = newValue)
+                                .build());
+
+                qol.addEntry(builder.entryBuilder()
                                 .startStrList(Component.literal("Custom Enchantment Max Levels"),
                                                 MacroConfig.customEnchantmentLevels)
                                 .setDefaultValue(MacroConfig.DEFAULT_CUSTOM_ENCHANTMENT_LEVELS)

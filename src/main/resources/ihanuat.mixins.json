@@ -9,7 +9,8 @@
         "PlayerTabOverlayAccessor",
         "MixinGameRenderer",
         "MixinMouseHandler",
-        "MixinClientPacketListener"
+        "MixinClientPacketListener",
+        "ChatHudMixin"
     ],
     "injectors": {
         "defaultRequire": 1

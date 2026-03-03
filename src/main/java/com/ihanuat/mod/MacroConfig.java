@@ -66,6 +66,7 @@ public class MacroConfig {
     public static final boolean DEFAULT_PERSIST_SESSION_TIMER = true;
     public static final boolean DEFAULT_COMPACT_PROFIT_CALCULATOR = false;
     public static final boolean DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE = false;
+    public static final boolean DEFAULT_HIDE_FILTERED_CHAT = true;
 
     // Pet Tracker Defaults
     public static final java.util.List<String> DEFAULT_PET_TRACKER_LIST = java.util.Arrays.asList(
@@ -181,6 +182,7 @@ public class MacroConfig {
     public static boolean persistSessionTimer = DEFAULT_PERSIST_SESSION_TIMER;
     public static boolean compactProfitCalculator = DEFAULT_COMPACT_PROFIT_CALCULATOR;
     public static boolean showProfitHudWhileInactive = DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE;
+    public static boolean hideFilteredChat = DEFAULT_HIDE_FILTERED_CHAT;
 
     public static java.util.List<String> petTrackerList = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
 
@@ -318,6 +320,7 @@ public class MacroConfig {
         data.persistSessionTimer = persistSessionTimer;
         data.compactProfitCalculator = compactProfitCalculator;
         data.showProfitHudWhileInactive = showProfitHudWhileInactive;
+        data.hideFilteredChat = hideFilteredChat;
 
         data.petTrackerList = new java.util.ArrayList<>(petTrackerList);
 
@@ -407,6 +410,7 @@ public class MacroConfig {
                 persistSessionTimer = data.persistSessionTimer;
                 compactProfitCalculator = data.compactProfitCalculator;
                 showProfitHudWhileInactive = data.showProfitHudWhileInactive;
+                hideFilteredChat = data.hideFilteredChat;
 
                 if (data.petTrackerList != null) {
                     petTrackerList = new java.util.ArrayList<>(data.petTrackerList);
@@ -482,6 +486,7 @@ public class MacroConfig {
         boolean persistSessionTimer = DEFAULT_PERSIST_SESSION_TIMER;
         boolean compactProfitCalculator = DEFAULT_COMPACT_PROFIT_CALCULATOR;
         boolean showProfitHudWhileInactive = DEFAULT_SHOW_PROFIT_HUD_WHILE_INACTIVE;
+        boolean hideFilteredChat = DEFAULT_HIDE_FILTERED_CHAT;
 
         java.util.List<String> petTrackerList = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
 
