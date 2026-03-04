@@ -97,10 +97,21 @@ public class VisitorManager {
                     && GearManager.trackedWardrobeSlot != MacroConfig.wardrobeSlotVisitor) {
                 client.player.displayClientMessage(Component.literal(
                         "\u00A7eSwapping to Visitor Wardrobe (Slot " + MacroConfig.wardrobeSlotVisitor + ")..."), true);
-                client.execute(() -> GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotVisitor));
-                ClientUtils.waitForWardrobeGui(client);
+                GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotVisitor);
+                if (GearManager.isSwappingWardrobe) {
+                    try {
+                        ClientUtils.waitForWardrobeGui(client);
+                        while (GearManager.isSwappingWardrobe)
+                            Thread.sleep(50);
+                        while (GearManager.wardrobeCleanupTicks > 0)
+                            Thread.sleep(50);
+                        Thread.sleep(250);
+                    } catch (InterruptedException ignored) {
+                    }
+                }
             }
             ClientUtils.waitForGearAndGui(client);
+                        ClientUtils.sendDebugMessage(client, "Wardrobe swap done, now triggering visitor macro");
             com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.VISITING);
             com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
             com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:visitor", 0);

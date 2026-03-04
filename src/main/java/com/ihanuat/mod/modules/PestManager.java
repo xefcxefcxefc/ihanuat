@@ -202,10 +202,19 @@ public class PestManager {
                                 "\u00A7eSwapping to Visitor Wardrobe (Slot " + MacroConfig.wardrobeSlotVisitor
                                         + ")..."),
                                 true);
-                        client.execute(() -> GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotVisitor));
+                        GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotVisitor);
+                        if (GearManager.isSwappingWardrobe) {
+                            ClientUtils.waitForWardrobeGui(client);
+                            while (GearManager.isSwappingWardrobe)
+                                Thread.sleep(50);
+                            while (GearManager.wardrobeCleanupTicks > 0)
+                                Thread.sleep(50);
+                            Thread.sleep(250);
+                        }
                     }
 
                     ClientUtils.waitForGearAndGui(client);
+                    ClientUtils.sendDebugMessage(client, "Wardrobe swap done, now triggering visitor macro");
                     MacroStateManager.setCurrentState(MacroState.State.VISITING);
                     com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
                     com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:visitor", 0);
@@ -279,10 +288,19 @@ public class PestManager {
                     client.player.displayClientMessage(Component.literal(
                             "\u00A7eSwapping to Visitor Wardrobe (Slot " + MacroConfig.wardrobeSlotVisitor + ")..."),
                             true);
-                    client.execute(() -> GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotVisitor));
+                    GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotVisitor);
+                    if (GearManager.isSwappingWardrobe) {
+                        ClientUtils.waitForWardrobeGui(client);
+                        while (GearManager.isSwappingWardrobe)
+                            Thread.sleep(50);
+                        while (GearManager.wardrobeCleanupTicks > 0)
+                            Thread.sleep(50);
+                        Thread.sleep(250);
+                    }
                 }
 
                 ClientUtils.waitForGearAndGui(client);
+                ClientUtils.sendDebugMessage(client, "Wardrobe swap done, now triggering visitor macro");
                 com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
                 com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:visitor", 0);
                 isCleaningInProgress = false;
