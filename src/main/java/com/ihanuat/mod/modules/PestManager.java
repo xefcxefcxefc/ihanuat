@@ -298,10 +298,10 @@ public class PestManager {
             com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
             prepSwappedForCurrentPestCycle = false; // Ensure flag is reset when returning
             com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
-            if (isCleaningInProgress || isPrepSwapping)
-                return;
-            com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(), 0);
             isCleaningInProgress = false;
+            com.ihanuat.mod.util.ClientUtils.sendDebugMessage(client,
+                    "Pest cleaning sequence finished. Restarting farming...");
+            com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(), 0);
         } catch (InterruptedException ignored) {
         }
     }

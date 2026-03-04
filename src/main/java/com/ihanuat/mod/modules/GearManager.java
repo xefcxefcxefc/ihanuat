@@ -219,6 +219,7 @@ public class GearManager {
             if (PestManager.isCleaningInProgress)
                 return;
             com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
+            ClientUtils.sendDebugMessage(client, "Finalizing gear swap. Restarting farming script...");
             com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(), 0);
         });
     }
