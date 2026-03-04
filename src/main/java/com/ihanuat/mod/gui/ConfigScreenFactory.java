@@ -49,6 +49,16 @@ public class ConfigScreenFactory {
                                 .build());
 
                 general.addEntry(builder.entryBuilder()
+                                .startEnumSelector(Component.literal("Delay Mode"),
+                                                MacroConfig.DelayMode.class,
+                                                MacroConfig.delayMode)
+                                .setDefaultValue(MacroConfig.DEFAULT_DELAY_MODE)
+                                .setTooltip(Component.literal(
+                                                "§7Legacy: Old hardcoded delays (reliable for some users)\n§7Experimental: New concrete chat/position checks"))
+                                .setSaveConsumer(newValue -> MacroConfig.delayMode = newValue)
+                                .build());
+
+                general.addEntry(builder.entryBuilder()
                                 .startStringDropdownMenu(Component.literal("Farm Script Command"),
                                                 MacroConfig.restartScript)
                                 .setDefaultValue(MacroConfig.DEFAULT_RESTART_SCRIPT)
