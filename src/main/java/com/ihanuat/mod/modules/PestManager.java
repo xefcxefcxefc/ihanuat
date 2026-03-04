@@ -371,12 +371,42 @@ public class PestManager {
 
                 // 1. Wardrobe (Synchronous wait)
                 if (MacroConfig.gearSwapMode == MacroConfig.GearSwapMode.WARDROBE && MacroConfig.wardrobeSlotPest > 0) {
+                    ClientUtils.sendDebugMessage(client, "Prep-swap: Initiating wardrobe swap to slot " + MacroConfig.wardrobeSlotPest);
                     GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotPest);
                     if (GearManager.isSwappingWardrobe) {
+                        ClientUtils.sendDebugMessage(client, "Prep-swap: Waiting for wardrobe GUI...");
                         ClientUtils.waitForWardrobeGui(client);
+                        
+                        // Check if wardrobe GUI was actually detected
+                        if (!GearManager.wardrobeGuiDetected) {
+                            ClientUtils.sendDebugMessage(client, "§cPrep-swap: Wardrobe GUI not detected! Retrying in 1 second...");
+                            Thread.sleep(1000);
+                            
+                            // Retry wardrobe swap
+                            ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Initiating wardrobe swap to slot " + MacroConfig.wardrobeSlotPest);
+                            GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotPest);
+                            if (GearManager.isSwappingWardrobe) {
+                                ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Waiting for wardrobe GUI...");
+                                ClientUtils.waitForWardrobeGui(client);
+                                
+                                if (!GearManager.wardrobeGuiDetected) {
+                                    ClientUtils.sendDebugMessage(client, "§cPrep-swap: Wardrobe GUI still not detected after retry! Aborting prep-swap.");
+                                    prepSwappedForCurrentPestCycle = false;
+                                    return;
+                                } else {
+                                    ClientUtils.sendDebugMessage(client, "§aPrep-swap: Retry successful! Wardrobe GUI detected.");
+                                }
+                            }
+                        } else {
+                            ClientUtils.sendDebugMessage(client, "§aPrep-swap: Wardrobe GUI detected successfully.");
+                        }
+                        
                         while (GearManager.isSwappingWardrobe && !isCleaningInProgress)
                             Thread.sleep(50);
                         Thread.sleep(250);
+                        ClientUtils.sendDebugMessage(client, "Prep-swap: Wardrobe swap completed.");
+                    } else {
+                        ClientUtils.sendDebugMessage(client, "Prep-swap: Wardrobe swap not needed (already on correct slot).");
                     }
                 }
 
@@ -387,10 +417,36 @@ public class PestManager {
 
                 // 2. Equipment (Synchronous wait)
                 if (MacroConfig.autoEquipment) {
+                    ClientUtils.sendDebugMessage(client, "Prep-swap: Initiating equipment swap to pest gear");
                     GearManager.ensureEquipment(client, false);
                     // Give server time to open GUI before we even check
                     Thread.sleep(200);
+                    ClientUtils.sendDebugMessage(client, "Prep-swap: Waiting for equipment GUI...");
                     ClientUtils.waitForEquipmentGui(client);
+                    
+                    // Check if equipment GUI was actually detected
+                    if (!GearManager.equipmentGuiDetected) {
+                        ClientUtils.sendDebugMessage(client, "§cPrep-swap: Equipment GUI not detected! Retrying in 1 second...");
+                        Thread.sleep(1000);
+                        
+                        // Retry equipment swap
+                        ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Initiating equipment swap to pest gear");
+                        GearManager.ensureEquipment(client, false);
+                        Thread.sleep(200);
+                        ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Waiting for equipment GUI...");
+                        ClientUtils.waitForEquipmentGui(client);
+                        
+                        if (!GearManager.equipmentGuiDetected) {
+                            ClientUtils.sendDebugMessage(client, "§cPrep-swap: Equipment GUI still not detected after retry! Aborting prep-swap.");
+                            prepSwappedForCurrentPestCycle = false;
+                            return;
+                        } else {
+                            ClientUtils.sendDebugMessage(client, "§aPrep-swap: Retry successful! Equipment GUI detected.");
+                        }
+                    } else {
+                        ClientUtils.sendDebugMessage(client, "§aPrep-swap: Equipment GUI detected successfully.");
+                    }
+                    
                     while (GearManager.isSwappingEquipment && !isCleaningInProgress)
                         Thread.sleep(50);
 
@@ -399,6 +455,7 @@ public class PestManager {
                         Thread.sleep(50);
                     }
                     Thread.sleep(250);
+                    ClientUtils.sendDebugMessage(client, "Prep-swap: Equipment swap completed.");
                 }
 
                 if (isCleaningInProgress) {
