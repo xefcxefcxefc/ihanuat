@@ -920,8 +920,7 @@ public class ProfitManager {
                 // ── Level 1 ─────────────────────────────────────────────────────
                 long lvl1Price = 0;
                 String url1 = "https://sky.coflnet.com/api/auctions/tag/" + info.tag
-                        + "/active/overview?query%5BRarity%5D=" + info.rarity.name()
-                        + "&query%5BPetLevel%5D=1";
+                        + "/active/overview?query%5BRarity%5D=" + info.rarity.name();
 
                 java.net.http.HttpRequest req1 = java.net.http.HttpRequest.newBuilder()
                         .uri(java.net.URI.create(url1))
