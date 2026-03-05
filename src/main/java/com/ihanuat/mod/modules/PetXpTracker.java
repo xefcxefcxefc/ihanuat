@@ -206,8 +206,7 @@ public class PetXpTracker {
 
         currentXpTable = getXpTable(activePet.rarity, activePet.maxLevel);
 
-        int windowEnd = Math.min(petLineIndex + 9, tabLines.size());
-        for (int i = petLineIndex + 1; i < windowEnd; i++) {
+        for (int i = petLineIndex + 1; i < tabLines.size(); i++) {
             if (MAX_LEVEL_PATTERN.matcher(tabLines.get(i)).find()) {
                 // Ignore max level pets
                 return;
