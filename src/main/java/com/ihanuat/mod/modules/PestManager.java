@@ -301,7 +301,8 @@ public class PestManager {
                     }
                 }
 
-                // Wait for any remaining GUIs and wardrobe swap (equipment swap not done for visitors)
+                // Wait for any remaining GUIs and wardrobe swap (equipment swap not done for
+                // visitors)
                 try {
                     while (GearManager.isSwappingWardrobe)
                         Thread.sleep(50);
@@ -323,7 +324,8 @@ public class PestManager {
 
             GearManager.swapToFarmingToolSync(client);
 
-            // Only wait for gear swap if equipment swap is enabled (since it's only done during cleaning if enabled)
+            // Only wait for gear swap if equipment swap is enabled (since it's only done
+            // during cleaning if enabled)
             if (MacroConfig.autoEquipment) {
                 ClientUtils.waitForGearAndGui(client);
             }
@@ -358,7 +360,7 @@ public class PestManager {
                 com.ihanuat.mod.util.CommandUtils.stopScript(client, 0);
                 // Wait for script to actually stop before attempting wardrobe swap
                 Thread.sleep(400);
-                
+
                 if (isCleaningInProgress) {
                     prepSwappedForCurrentPestCycle = false;
                     return;
@@ -371,42 +373,47 @@ public class PestManager {
 
                 // 1. Wardrobe (Synchronous wait)
                 if (MacroConfig.gearSwapMode == MacroConfig.GearSwapMode.WARDROBE && MacroConfig.wardrobeSlotPest > 0) {
-                    ClientUtils.sendDebugMessage(client, "Prep-swap: Initiating wardrobe swap to slot " + MacroConfig.wardrobeSlotPest);
+                    ClientUtils.sendDebugMessage(client,
+                            "Prep-swap: Initiating wardrobe swap to slot " + MacroConfig.wardrobeSlotPest);
                     GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotPest);
                     if (GearManager.isSwappingWardrobe) {
                         ClientUtils.sendDebugMessage(client, "Prep-swap: Waiting for wardrobe GUI...");
                         ClientUtils.waitForWardrobeGui(client);
-                        
+
                         // Check if wardrobe GUI was actually detected
                         if (!GearManager.wardrobeGuiDetected) {
-                            ClientUtils.sendDebugMessage(client, "§cPrep-swap: Wardrobe GUI not detected! Retrying in 1 second...");
+                            ClientUtils.sendDebugMessage(client,
+                                    "§cPrep-swap: Wardrobe GUI not detected! Retrying in 1 second...");
                             Thread.sleep(1000);
-                            
+
                             // Retry wardrobe swap
-                            ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Initiating wardrobe swap to slot " + MacroConfig.wardrobeSlotPest);
+                            ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Initiating wardrobe swap to slot "
+                                    + MacroConfig.wardrobeSlotPest);
                             GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotPest);
                             if (GearManager.isSwappingWardrobe) {
                                 ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Waiting for wardrobe GUI...");
                                 ClientUtils.waitForWardrobeGui(client);
-                                
+
                                 if (!GearManager.wardrobeGuiDetected) {
-                                    ClientUtils.sendDebugMessage(client, "§cPrep-swap: Wardrobe GUI still not detected after retry! Aborting prep-swap.");
+                                    ClientUtils.sendDebugMessage(client,
+                                            "§cPrep-swap: Wardrobe GUI still not detected after retry! Aborting prep-swap.");
                                     prepSwappedForCurrentPestCycle = false;
                                     return;
                                 } else {
-                                    ClientUtils.sendDebugMessage(client, "§aPrep-swap: Retry successful! Wardrobe GUI detected.");
+                                    ClientUtils.sendDebugMessage(client,
+                                            "§aPrep-swap: Retry successful! Wardrobe GUI detected.");
                                 }
                             }
-                        } else {
                             ClientUtils.sendDebugMessage(client, "§aPrep-swap: Wardrobe GUI detected successfully.");
                         }
-                        
+
                         while (GearManager.isSwappingWardrobe && !isCleaningInProgress)
                             Thread.sleep(50);
                         Thread.sleep(250);
                         ClientUtils.sendDebugMessage(client, "Prep-swap: Wardrobe swap completed.");
                     } else {
-                        ClientUtils.sendDebugMessage(client, "Prep-swap: Wardrobe swap not needed (already on correct slot).");
+                        ClientUtils.sendDebugMessage(client,
+                                "Prep-swap: Wardrobe swap not needed (already on correct slot).");
                     }
                 }
 
@@ -423,30 +430,34 @@ public class PestManager {
                     Thread.sleep(200);
                     ClientUtils.sendDebugMessage(client, "Prep-swap: Waiting for equipment GUI...");
                     ClientUtils.waitForEquipmentGui(client);
-                    
+
                     // Check if equipment GUI was actually detected
                     if (!GearManager.equipmentGuiDetected) {
-                        ClientUtils.sendDebugMessage(client, "§cPrep-swap: Equipment GUI not detected! Retrying in 1 second...");
+                        ClientUtils.sendDebugMessage(client,
+                                "§cPrep-swap: Equipment GUI not detected! Retrying in 1 second...");
                         Thread.sleep(1000);
-                        
+
                         // Retry equipment swap
-                        ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Initiating equipment swap to pest gear");
+                        ClientUtils.sendDebugMessage(client,
+                                "Prep-swap: Retry - Initiating equipment swap to pest gear");
                         GearManager.ensureEquipment(client, false);
                         Thread.sleep(200);
                         ClientUtils.sendDebugMessage(client, "Prep-swap: Retry - Waiting for equipment GUI...");
                         ClientUtils.waitForEquipmentGui(client);
-                        
+
                         if (!GearManager.equipmentGuiDetected) {
-                            ClientUtils.sendDebugMessage(client, "§cPrep-swap: Equipment GUI still not detected after retry! Aborting prep-swap.");
+                            ClientUtils.sendDebugMessage(client,
+                                    "§cPrep-swap: Equipment GUI still not detected after retry! Aborting prep-swap.");
                             prepSwappedForCurrentPestCycle = false;
                             return;
                         } else {
-                            ClientUtils.sendDebugMessage(client, "§aPrep-swap: Retry successful! Equipment GUI detected.");
+                            ClientUtils.sendDebugMessage(client,
+                                    "§aPrep-swap: Retry successful! Equipment GUI detected.");
                         }
                     } else {
                         ClientUtils.sendDebugMessage(client, "§aPrep-swap: Equipment GUI detected successfully.");
                     }
-                    
+
                     while (GearManager.isSwappingEquipment && !isCleaningInProgress)
                         Thread.sleep(50);
 
@@ -484,30 +495,31 @@ public class PestManager {
         if (isCleaningInProgress || GearManager.isSwappingWardrobe || GearManager.isSwappingEquipment)
             return;
 
-        ClientUtils.sendDebugMessage(client, "Stopping script: Pest threshold reached, starting cleaning sequence for plot " + plot);
+        ClientUtils.sendDebugMessage(client,
+                "Stopping script: Pest threshold reached, starting cleaning sequence for plot " + plot);
         com.ihanuat.mod.util.CommandUtils.stopScript(client, 0);
         isCleaningInProgress = true;
         GearManager.shouldRestartFarmingAfterSwap = false;
         com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.CLEANING);
         currentInfestedPlot = plot;
         final int sessionId = ++currentPestSessionId;
-        String currentPlot = ClientUtils.getCurrentPlot(client);
-        ClientUtils.sendDebugMessage(client, "pests spawned in " + plot + ", current plot " + currentPlot);
+        final String currentPlot = ClientUtils.getCurrentPlot(client);
 
         new Thread(() -> {
             try {
-                Thread.sleep(850); // Slightly longer delay for script stop
-
+                Thread.sleep(850);
                 if (sessionId != currentPestSessionId)
                     return;
 
+                // 1. Gear Restoration
                 if (MacroConfig.gearSwapMode == MacroConfig.GearSwapMode.WARDROBE) {
                     int targetSlot = MacroConfig.wardrobeSlotFarming;
-                    boolean needsSwap = prepSwappedForCurrentPestCycle || GearManager.trackedWardrobeSlot != targetSlot;
-
-                    if (needsSwap && targetSlot > 0) {
-                        client.player.displayClientMessage(Component.literal(
-                                "§eRestoring Farming Wardrobe (Slot " + targetSlot + ") for Vacuuming..."), true);
+                    if ((prepSwappedForCurrentPestCycle || GearManager.trackedWardrobeSlot != targetSlot)
+                            && targetSlot > 0) {
+                        client.player.displayClientMessage(
+                                Component.literal(
+                                        "§eRestoring Farming Wardrobe (Slot " + targetSlot + ") for Vacuuming..."),
+                                true);
                         client.execute(() -> GearManager.ensureWardrobeSlot(client, targetSlot));
                         ClientUtils.waitForWardrobeGui(client);
                         while (GearManager.isSwappingWardrobe)
@@ -515,14 +527,10 @@ public class PestManager {
                         while (GearManager.wardrobeCleanupTicks > 0)
                             Thread.sleep(50);
                         Thread.sleep(250);
-                    } else {
-                        client.player.displayClientMessage(
-                                Component.literal("§aGear verified: Already in Farming Wardrobe."), true);
                     }
                 }
 
                 if (MacroConfig.autoEquipment) {
-                    // Always try to ensures farming gear for vacuuming
                     GearManager.ensureEquipment(client, true);
                     ClientUtils.waitForEquipmentGui(client);
                     while (GearManager.isSwappingEquipment)
@@ -531,7 +539,6 @@ public class PestManager {
                 }
 
                 prepSwappedForCurrentPestCycle = false;
-
                 client.player.displayClientMessage(
                         Component.literal("§6Starting Pest Cleaner script (" + currentInfestedPlot + ")..."), true);
                 com.ihanuat.mod.util.CommandUtils.setSpawn(client);
@@ -544,137 +551,85 @@ public class PestManager {
                     return;
                 }
 
-                try {
-                    boolean isSamePlot = currentInfestedPlot != null && currentInfestedPlot.equals(currentPlot);
-                    if (MacroConfig.aotvToRoof && (!MacroConfig.aotvToRoofOnlySamePlot || isSamePlot)) {
-                        // AOTV to Roof sequence
-                        client.player.displayClientMessage(Component.literal("§6Using AOTV to Roof sequence..."), true);
+                // 2. AOTV and Teleport Logic
+                boolean shouldDoAotv = false;
+                boolean isSamePlot = currentInfestedPlot != null && currentInfestedPlot.equals(currentPlot);
 
-                        // Start sneaking early to ensure server knows we are sneaking
-                        isSneakingForAotv = true;
-
-                        // Randomize yaw preservation offset slightly so heading isn't pixel-perfect
-                        // each time
-                        Vec3 eyePos = client.player.getEyePosition();
-                        float yawRad = (float) Math.toRadians(client.player.getYRot());
-                        double offsetVariance = 0.0008 + Math.random() * 0.0006; // 0.0008–0.0014
-                        double offsetX = -Math.sin(yawRad) * offsetVariance;
-                        double offsetZ = Math.cos(yawRad) * offsetVariance;
-
-                        // Randomize target pitch: aim for -90 but vary by a degree or two
-                        double pitchVariance = 85.0 + Math.random() * 6.0; // 85°–91° up
-                        Vec3 targetPos = new Vec3(eyePos.x + offsetX, eyePos.y + pitchVariance, eyePos.z + offsetZ);
-
-                        // Randomize rotation speed slightly around the configured time
-                        int rotationTimeVariance = (int) (MacroConfig.rotationTime * (0.92 + Math.random() * 0.16)); // ±8%
-                        RotationManager.initiateRotation(client, targetPos, rotationTimeVariance);
-
-                        // Wait for rotation to complete with minimal delay
-                        ClientUtils.waitForRotationToComplete(client, -90.0f, rotationTimeVariance);
-
-                        // Find Aspect of the Void in inventory
-                        int aotvSlot = ClientUtils.findAspectOfTheVoidSlot(client);
-                        if (aotvSlot == -1) {
-                            client.player.displayClientMessage(
-                                    Component.literal("§cAspect of the Void not found in inventory!"), true);
-                            isSneakingForAotv = false;
-                            client.execute(() -> client.options.keyShift.setDown(false));
-                            // Fall back to normal plottp - ensure wardrobe GUI is closed first
-                            if (currentInfestedPlot != null && !currentInfestedPlot.equals("0")) {
-                                // Ensure GUI is fully closed before warping
-                                long guiCloseStart = System.currentTimeMillis();
-                                while (client.screen != null && System.currentTimeMillis() - guiCloseStart < 2000) {
-                                    Thread.sleep(50);
-                                }
-                                com.ihanuat.mod.util.CommandUtils.plotTp(client, currentInfestedPlot);
-                                Thread.sleep(250);
-                            }
-                        } else {
-                            // Swap to Aspect of the Void
-                            if (aotvSlot < 9) {
-                                // Use the proper method to change selected slot on the main thread
-                                int slot = aotvSlot;
-                                client.execute(
-                                        () -> ((AccessorInventory) client.player.getInventory()).setSelected(slot));
-                                Thread.sleep(100); // Small wait for slot sync
-                            } else {
-                                // Item is in main inventory, not hotbar - use fallback
-                                client.player.displayClientMessage(
-                                        Component.literal("§cAspect of the Void not in hotbar, using fallback..."),
-                                        true);
-                                isSneakingForAotv = false;
-                                client.execute(() -> client.options.keyShift.setDown(false));
-                                if (currentInfestedPlot != null && !currentInfestedPlot.equals("0")) {
-                                    // Ensure GUI is fully closed before warping
-                                    long guiCloseStart = System.currentTimeMillis();
-                                    while (client.screen != null && System.currentTimeMillis() - guiCloseStart < 2000) {
-                                        Thread.sleep(50);
-                                    }
-                                    com.ihanuat.mod.util.CommandUtils.plotTp(client, currentInfestedPlot);
-                                    Thread.sleep(250);
-                                }
-                            }
-
-                            if (aotvSlot < 9) {
-                                // Capture start Y for teleport verification
-                                double startY = client.player.getY();
-
-                                // Small random hesitation before right-clicking (50–130ms)
-                                Thread.sleep(50 + (long) (Math.random() * 80));
-                                client.execute(() -> client.gameMode.useItem(client.player,
-                                        net.minecraft.world.InteractionHand.MAIN_HAND));
-
-                                // Wait for AOTV to actually teleport us (Y change)
-                                ClientUtils.waitForYChange(client, startY, 1500);
-
-                                // Randomize shift release delay slightly (40–100ms)
-                                Thread.sleep(40 + (long) (Math.random() * 60));
-                                isSneakingForAotv = false;
-                                client.execute(() -> client.options.keyShift.setDown(false));
-
-                                // Small random pause before starting to look forward (30–80ms) - simulates
-                                // human reaction
-                                Thread.sleep(30 + (long) (Math.random() * 50));
-
-                                // Smoothly rotate back to looking roughly forward after etherwarp
-                                Vec3 newEyePos = client.player.getEyePosition();
-                                float yawRadPost = (float) Math.toRadians(client.player.getYRot());
-                                double postOffsetVariance = 0.0008 + Math.random() * 0.0006;
-                                double postOffsetX = -Math.sin(yawRadPost) * postOffsetVariance;
-                                double postOffsetZ = Math.cos(yawRadPost) * postOffsetVariance;
-
-                                // Target a slightly randomized forward-ish pitch (-10 to +10 degrees around
-                                // horizontal)
-                                double targetPitchDeg = -5.0 + Math.random() * 10.0;
-                                double pitchOffsetY = Math.tan(Math.toRadians(-targetPitchDeg)) * 5.0;
-
-                                Vec3 forwardTarget = new Vec3(
-                                        newEyePos.x + postOffsetX * 100,
-                                        newEyePos.y + pitchOffsetY,
-                                        newEyePos.z + postOffsetZ * 100);
-
-                                // Smooth rotation time (250–400ms) — fast enough to not look frozen, slow
-                                // enough to look human
-                                int returnRotationTime = 250 + (int) (Math.random() * 150);
-                                RotationManager.initiateRotation(client, forwardTarget, returnRotationTime);
-                            }
-                        }
+                if (MacroConfig.aotvToRoof) {
+                    if (MacroConfig.aotvRoofPlots.isEmpty()) {
+                        shouldDoAotv = isSamePlot;
                     } else {
-                        // Normal plottp sequence
-                        if (currentInfestedPlot != null && !currentInfestedPlot.equals("0")) {
-                            com.ihanuat.mod.util.CommandUtils.plotTp(client, currentInfestedPlot);
-                            Thread.sleep(250);
+                        if (MacroConfig.aotvRoofPlots.contains(currentInfestedPlot)) {
+                            ClientUtils.sendDebugMessage(client, "plot in list, performing aotv");
+                            shouldDoAotv = true;
+                        } else {
+                            ClientUtils.sendDebugMessage(client, "plot not in list, skipping aotv");
                         }
                     }
-
-                    // Trigger pest cleaning sequence immediately
-                    ClientUtils.sendDebugMessage(client, "Stopping script: Ready to start pest cleaner");
-                    com.ihanuat.mod.util.CommandUtils.stopScript(client, 50); // Minimal delay
-                    GearManager.swapToFarmingToolSync(client);
-                    ClientUtils.sendDebugMessage(client, "Starting pest cleaner script for plot " + currentInfestedPlot);
-                    com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 0);
-                } catch (InterruptedException ignored) {
                 }
+
+                // Warp to infested plot if not already there
+                if (!isSamePlot && currentInfestedPlot != null && !currentInfestedPlot.equals("0")) {
+                    if (com.ihanuat.mod.util.CommandUtils.plotTp(client, currentInfestedPlot)) {
+                        Thread.sleep(250);
+                    } else {
+                        client.player.displayClientMessage(
+                                Component.literal("§cFailed to warp to plot " + currentInfestedPlot + "!"), true);
+                        shouldDoAotv = false; // Cancel AOTV if warp failed
+                    }
+                }
+
+                if (shouldDoAotv) {
+                    isSneakingForAotv = true;
+                    Vec3 eyePos = client.player.getEyePosition();
+                    float yawRad = (float) Math.toRadians(client.player.getYRot());
+                    double offsetX = -Math.sin(yawRad) * (0.0008 + Math.random() * 0.0006);
+                    double offsetZ = Math.cos(yawRad) * (0.0008 + Math.random() * 0.0006);
+                    Vec3 targetPos = new Vec3(eyePos.x + offsetX, eyePos.y + (85.0 + Math.random() * 6.0),
+                            eyePos.z + offsetZ);
+                    int rotTime = (int) (MacroConfig.rotationTime * (0.92 + Math.random() * 0.16));
+
+                    RotationManager.initiateRotation(client, targetPos, rotTime);
+                    ClientUtils.waitForRotationToComplete(client, -90.0f, rotTime);
+
+                    int aotvSlot = ClientUtils.findAspectOfTheVoidSlot(client);
+                    if (aotvSlot != -1 && aotvSlot < 9) {
+                        client.execute(() -> ((AccessorInventory) client.player.getInventory()).setSelected(aotvSlot));
+                        Thread.sleep(150);
+                        double startY = client.player.getY();
+                        Thread.sleep(50 + (long) (Math.random() * 80));
+                        client.execute(() -> client.gameMode.useItem(client.player,
+                                net.minecraft.world.InteractionHand.MAIN_HAND));
+
+                        ClientUtils.waitForYChange(client, startY, 1500);
+                        Thread.sleep(40 + (long) (Math.random() * 60));
+                        isSneakingForAotv = false;
+                        client.execute(() -> client.options.keyShift.setDown(false));
+                        Thread.sleep(30 + (long) (Math.random() * 50));
+
+                        // Look forward again
+                        Vec3 postEyePos = client.player.getEyePosition();
+                        float yawPost = (float) Math.toRadians(client.player.getYRot());
+                        double targetPitch = -5.0 + Math.random() * 10.0;
+                        Vec3 forward = new Vec3(postEyePos.x - Math.sin(yawPost) * 100,
+                                postEyePos.y + Math.tan(Math.toRadians(-targetPitch)) * 5.0,
+                                postEyePos.z + Math.cos(yawPost) * 100);
+                        RotationManager.initiateRotation(client, forward, 250 + (int) (Math.random() * 150));
+                    } else {
+                        // Fallback: AOTV failed or not found
+                        isSneakingForAotv = false;
+                        client.execute(() -> client.options.keyShift.setDown(false));
+                        // No redundant plotTp needed here as we already warped above
+                    }
+                }
+
+                // 3. Start Cleaning Script
+                ClientUtils.sendDebugMessage(client, "Ready to start pest cleaner");
+                com.ihanuat.mod.util.CommandUtils.stopScript(client, 50);
+                GearManager.swapToFarmingToolSync(client);
+                ClientUtils.sendDebugMessage(client, "Starting pest cleaner script for plot " + currentInfestedPlot);
+                com.ihanuat.mod.util.CommandUtils.startScript(client, ".ez-startscript misc:pestCleaner", 0);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -696,7 +651,8 @@ public class PestManager {
                     "§aPhillip message detected! Returning to plot §e" + currentInfestedPlot + "..."), true);
             new Thread(() -> {
                 try {
-                    ClientUtils.sendDebugMessage(client, "Stopping script: Phillip message detected, reactivating bonus");
+                    ClientUtils.sendDebugMessage(client,
+                            "Stopping script: Phillip message detected, reactivating bonus");
                     com.ihanuat.mod.util.CommandUtils.stopScript(client, MacroConfig.getRandomizedDelay(250));
                     ClientUtils.sendDebugMessage(client, "Teleporting back to plot " + currentInfestedPlot);
                     com.ihanuat.mod.util.CommandUtils.plotTp(client, currentInfestedPlot);

@@ -243,12 +243,13 @@ public class ConfigScreenFactory {
                                 .build());
 
                 autoPest.addEntry(builder.entryBuilder()
-                                .startBooleanToggle(Component.literal("AOTV to roof only if same plot"),
-                                                MacroConfig.aotvToRoofOnlySamePlot)
-                                .setDefaultValue(MacroConfig.DEFAULT_AOTV_TO_ROOF_ONLY_SAME_PLOT)
+                                .startStrList(Component.literal("AOTV Roof Plots"),
+                                                MacroConfig.aotvRoofPlots)
+                                .setDefaultValue(MacroConfig.DEFAULT_AOTV_ROOF_PLOTS)
                                 .setTooltip(Component.literal(
-                                                "Only attempts to etherwarp to the roof if you are already on the infested plot. Recommended to avoid warp lag issues."))
-                                .setSaveConsumer(newValue -> MacroConfig.aotvToRoofOnlySamePlot = newValue)
+                                                "List of plot numbers where AOTV to roof is allowed. If the list is empty, AOTV is allowed on all plots."))
+                                .setExpanded(true)
+                                .setSaveConsumer(newValue -> MacroConfig.aotvRoofPlots = newValue)
                                 .build());
 
                 // --- Auto Visitor Category ---

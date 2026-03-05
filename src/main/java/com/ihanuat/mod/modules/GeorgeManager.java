@@ -32,102 +32,115 @@ public class GeorgeManager {
         confirmationCount = 0;
     }
 
-    public static void handleGeorgeMenu(Minecraft client, AbstractContainerScreen<?> screen) {
-        if (!isSelling)
-            return;
+    public static long lastGeorgeCallTime = 0;
+    private static final long GEORGE_RECALL_DELAY_MS = 3000;
 
+    public static void handleGeorgeMenu(Minecraft client, AbstractContainerScreen<?> screen) {
         if (screen == null)
             return;
+
+        String rawTitle = screen.getTitle().getString();
+        String title = rawTitle.replaceAll("(?i)§.", "").toLowerCase();
+
+        if (!isSelling) {
+            // Failsafe: if George GUI is open but we aren't selling, check if we should
+            // close it
+            if (title.contains("george") || title.contains("sell pets") || title.contains("pet collector")
+                    || title.contains("offer pets")) {
+                if (countPetsInInventory(client) == 0 && MacroStateManager.isMacroRunning()) {
+                    client.player.displayClientMessage(
+                            Component.literal("§c[Ihanuat] Unexpected George GUI detected. Restarting script..."),
+                            false);
+                    client.player.closeContainer();
+
+                    // Restart script as a safety measure
+                    if (com.ihanuat.mod.MacroStateManager
+                            .getCurrentState() == com.ihanuat.mod.MacroState.State.FARMING) {
+                        new Thread(() -> {
+                            try {
+                                com.ihanuat.mod.util.CommandUtils.stopScript(client, 0);
+                                Thread.sleep(1000);
+                                ClientUtils.sendDebugMessage(client,
+                                        "Restarting script after unexpected George GUI closure");
+                                com.ihanuat.mod.util.CommandUtils.startScript(client,
+                                        MacroConfig.getFullRestartCommand(), 0);
+                            } catch (InterruptedException ignored) {
+                            }
+                        }).start();
+                    }
+                }
+            }
+            return;
+        }
 
         long now = System.currentTimeMillis();
         if (now - interactionTime < MacroConfig.getRandomizedDelay(MacroConfig.guiClickDelay))
             return;
 
-        String title = screen.getTitle().getString();
-
-        // Stage 0: Initial George GUI or Pet Selection
-        if (interactionStage == 0) {
-
-            if (!title.toLowerCase().contains("george") && !title.toLowerCase().contains("sell pets")
-                    && !title.toLowerCase().contains("pet collector") && !title.toLowerCase().contains("offer pets"))
-                return;
-
-            int petSlotIdx = -1;
-            for (int i = 0; i < screen.getMenu().slots.size(); i++) {
-                Slot slot = screen.getMenu().slots.get(i);
-                if (!slot.hasItem())
-                    continue;
-
-                String rawName = slot.getItem().getHoverName().getString();
-                String name = rawName.replaceAll("(?i)§.", "").toLowerCase();
-
-                // Detailed debug for found items if requested, but for now let's just broaden
-                // match
-                if ((name.contains("rat") || name.contains("slug")) && name.contains("[lvl 1]")) {
-                    petSlotIdx = i;
-                    break;
-                }
-            }
-
-            if (petSlotIdx != -1) {
-                String petName = screen.getMenu().slots.get(petSlotIdx).getItem().getHoverName().getString();
-                client.player.displayClientMessage(Component.literal("§aSelling pet: " + petName), true);
-                client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, petSlotIdx, 0,
-                        ClickType.QUICK_MOVE, client.player);
-                interactionTime = now;
-                interactionStage = 1;
-                confirmationCount = 0;
-            } else {
-                // No pets found in this current GUI menu.
-                // If pets remain, 'update()' will handle re-calling George when the GUI closes.
-                // If no pets remain, we are done.
-                if (countPetsInInventory(client) == 0) {
-                    finishSelling(client);
-                }
-            }
+        // Stage Detection based on GUI Title
+        if (title.contains("offer pets") && interactionStage < 1) {
+            interactionStage = 1;
+            ClientUtils.sendDebugMessage(client, "Stage 1: Offer pets menu detected");
+            interactionTime = now;
+        } else if ((title.contains("confirm") || title.contains("are you sure")) && interactionStage < 3) {
+            interactionStage = 3;
+            ClientUtils.sendDebugMessage(client, "Stage 3: confirm sale gui screen");
+            interactionTime = now;
         }
-        // Stage 1: Confirmation Screen
-        else if (interactionStage == 1) {
-            boolean isConfirmScreen = title.contains("Confirm") || title.contains("Are you sure");
-            boolean isGeorgeScreen = title.toLowerCase().contains("george")
-                    || title.toLowerCase().contains("offer pets") || title.toLowerCase().contains("sell pets");
 
-            if (!isConfirmScreen && !isGeorgeScreen) {
-                if (now - interactionTime > 2000) {
-                    interactionStage = 0;
+        switch (interactionStage) {
+            case 0: // Idle or Pet Collector phase
+                if (title.contains("george") || title.contains("sell pets") || title.contains("pet collector")) {
+                    int petSlotIdx = findPetSlotIdx(screen);
+                    if (petSlotIdx != -1) {
+                        String petName = screen.getMenu().slots.get(petSlotIdx).getItem().getHoverName().getString();
+                        client.player.displayClientMessage(Component.literal("§aSelling pet: " + petName), true);
+                        client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, petSlotIdx, 0,
+                                ClickType.QUICK_MOVE, client.player);
+                        interactionTime = now;
+                    } else if (countPetsInInventory(client) == 0) {
+                        finishSelling(client);
+                    }
                 }
-                return;
-            }
+                break;
 
-            int confirmSlotIdx = -1;
-            for (int i = 0; i < screen.getMenu().slots.size(); i++) {
-                Slot slot = screen.getMenu().slots.get(i);
-                if (!slot.hasItem())
-                    continue;
-                ItemStack stack = slot.getItem();
-                String itemId = stack.getItem().toString().toLowerCase();
-                String itemName = stack.getHoverName().getString().toLowerCase();
-
-                if (itemId.contains("lime") || itemId.contains("green") || itemId.contains("terracotta")
-                        || itemName.contains("confirm") || itemName.contains("yes") || itemName.contains("accept")
-                        || itemName.contains("click to accept") || itemName.contains("accept offer")) {
-                    confirmSlotIdx = i;
-                    break;
+            case 1: // Offer pets menu detected
+                Slot slot13 = screen.getMenu().slots.size() > 13 ? screen.getMenu().slots.get(13) : null;
+                if (slot13 != null && slot13.hasItem() && isRatOrSlug(slot13.getItem())) {
+                    interactionStage = 2;
+                    ClientUtils.sendDebugMessage(client, "Stage 2: rat/slug pet in slot 13");
+                    interactionTime = now;
+                } else {
+                    // Try to find pet in inventory part of the GUI to move it to slot 13
+                    int petSlotIdx = findPetSlotIdx(screen);
+                    if (petSlotIdx != -1 && petSlotIdx != 13) {
+                        client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, petSlotIdx, 0,
+                                ClickType.QUICK_MOVE, client.player);
+                        interactionTime = now;
+                    }
                 }
-            }
+                break;
 
-            if (confirmSlotIdx != -1) {
-                client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, confirmSlotIdx, 0,
-                        ClickType.PICKUP, client.player);
-                interactionTime = now + 500; // Extra delay for confirmation
-                confirmationCount++;
-                if (confirmationCount >= 2) {
-                    interactionStage = 0; // Return to selection
+            case 2: // Pet in slot 13, wait for "Sell" button click
+                if (title.contains("offer pets")) {
+                    int sellButtonIdx = findButtonSlot(screen, "sell pet", "accept", "confirm", "offer");
+                    if (sellButtonIdx != -1) {
+                        client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, sellButtonIdx, 0,
+                                ClickType.PICKUP, client.player);
+                        interactionTime = now;
+                    }
                 }
-            } else if (now - interactionTime > 3000) {
-                // Button not found?
-                interactionStage = 0;
-            }
+                break;
+
+            case 3: // Confirmation screen
+                int confirmSlotIdx = findButtonSlot(screen, "confirm", "yes", "accept", "click to accept");
+                if (confirmSlotIdx != -1) {
+                    client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, confirmSlotIdx, 0,
+                            ClickType.PICKUP, client.player);
+                    interactionTime = now + 500;
+                    // interactionStage will reset in update() when gui closes, logging Stage 4
+                }
+                break;
         }
     }
 
@@ -159,8 +172,15 @@ public class GeorgeManager {
 
             // Handle GUI closing or failing to open
             if (client.screen == null) {
+                if (interactionStage > 0) {
+                    if (interactionStage >= 3) {
+                        ClientUtils.sendDebugMessage(client, "Stage 4: gui closed");
+                    }
+                    interactionStage = 0;
+                }
+
                 long now = System.currentTimeMillis();
-                if (now - interactionTime > 1000) {
+                if (now - interactionTime > 1500 && now - lastGeorgeCallTime > GEORGE_RECALL_DELAY_MS) {
                     int remaining = countPetsInInventory(client);
                     if (remaining > 0) {
                         client.player.displayClientMessage(
@@ -170,6 +190,7 @@ public class GeorgeManager {
                         interactionTime = now;
                         interactionStage = 0;
                         confirmationCount = 0;
+                        lastGeorgeCallTime = now;
                         com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/call george");
                     } else {
                         finishSelling(client);
@@ -212,7 +233,8 @@ public class GeorgeManager {
                     com.ihanuat.mod.util.ClientUtils.waitForGearAndGui(client);
                     client.execute(() -> {
                         GearManager.swapToFarmingTool(client);
-                        ClientUtils.sendDebugMessage(client, "Starting farming script after George sell: " + MacroConfig.getFullRestartCommand());
+                        ClientUtils.sendDebugMessage(client,
+                                "Starting farming script after George sell: " + MacroConfig.getFullRestartCommand());
                         com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(), 0);
                     });
                 } catch (Exception ignored) {
@@ -235,6 +257,44 @@ public class GeorgeManager {
             }
         }
         return count;
+    }
+
+    private static int findPetSlotIdx(AbstractContainerScreen<?> screen) {
+        for (int i = 0; i < screen.getMenu().slots.size(); i++) {
+            Slot slot = screen.getMenu().slots.get(i);
+            if (slot.hasItem() && isRatOrSlug(slot.getItem())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isRatOrSlug(ItemStack stack) {
+        if (stack == null || stack.isEmpty())
+            return false;
+        String name = stack.getHoverName().getString().replaceAll("(?i)§.", "").toLowerCase();
+        return (name.contains("rat") || name.contains("slug")) && name.contains("[lvl 1]");
+    }
+
+    private static int findButtonSlot(AbstractContainerScreen<?> screen, String... keywords) {
+        for (int i = 0; i < screen.getMenu().slots.size(); i++) {
+            Slot slot = screen.getMenu().slots.get(i);
+            if (!slot.hasItem())
+                continue;
+            ItemStack stack = slot.getItem();
+            String itemName = stack.getHoverName().getString().toLowerCase();
+            String itemId = stack.getItem().toString().toLowerCase();
+
+            for (String kw : keywords) {
+                if (itemName.contains(kw)) {
+                    if (itemId.contains("lime") || itemId.contains("green") || itemId.contains("emerald")
+                            || itemId.contains("terracotta")) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
     }
 
     private static void triggerAutomaticSell(Minecraft client, int count) {
@@ -272,6 +332,7 @@ public class GeorgeManager {
                     isSelling = true;
                     interactionStage = 0;
                     interactionTime = System.currentTimeMillis();
+                    lastGeorgeCallTime = interactionTime;
                     confirmationCount = 0;
                     com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/call george");
                 } else {
