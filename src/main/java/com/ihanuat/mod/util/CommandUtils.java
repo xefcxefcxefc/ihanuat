@@ -37,9 +37,11 @@ public class CommandUtils {
         synchronized (chatMessageQueue) {
             while (System.currentTimeMillis() - startTime < MESSAGE_TIMEOUT_MS) {
                 // Check existing messages
-                for (String msg : chatMessageQueue) {
+                java.util.Iterator<String> it = chatMessageQueue.iterator();
+                while (it.hasNext()) {
+                    String msg = it.next();
                     if (msg.contains(messageSubstring)) {
-                        chatMessageQueue.clear(); // Clear processed messages
+                        it.remove(); // Remove the matched message
                         return true;
                     }
                 }
@@ -69,9 +71,11 @@ public class CommandUtils {
      */
     public static boolean hasReceivedMessage(String messageSubstring) {
         synchronized (chatMessageQueue) {
-            for (String msg : chatMessageQueue) {
+            java.util.Iterator<String> it = chatMessageQueue.iterator();
+            while (it.hasNext()) {
+                String msg = it.next();
                 if (msg.contains(messageSubstring)) {
-                    chatMessageQueue.clear(); // Clear processed messages
+                    it.remove(); // Remove the matched message
                     return true;
                 }
             }
@@ -102,7 +106,7 @@ public class CommandUtils {
 
         if (com.ihanuat.mod.MacroConfig.delayMode == com.ihanuat.mod.MacroConfig.DelayMode.LEGACY) {
             try {
-                Thread.sleep(3000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -111,7 +115,7 @@ public class CommandUtils {
 
         boolean success = waitForChatMessage(client, "Your spawn location has been set!");
 
-        if (success && client.player != null) {
+        if (success) {
             ClientUtils.sendDebugMessage(client, "Spawn set has been detected");
         }
 
@@ -158,7 +162,7 @@ public class CommandUtils {
 
         if (com.ihanuat.mod.MacroConfig.delayMode == com.ihanuat.mod.MacroConfig.DelayMode.LEGACY) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -237,7 +241,7 @@ public class CommandUtils {
 
         if (com.ihanuat.mod.MacroConfig.delayMode == com.ihanuat.mod.MacroConfig.DelayMode.LEGACY) {
             try {
-                Thread.sleep(1200);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

@@ -183,6 +183,17 @@ public class ConfigScreenFactory {
                                                 MacroConfig.GearSwapMode.class,
                                                 MacroConfig.gearSwapMode)
                                 .setDefaultValue(MacroConfig.DEFAULT_GEAR_SWAP_MODE)
+                                .setEnumNameProvider(mode -> {
+                                        if (mode == MacroConfig.GearSwapMode.NONE)
+                                                return Component.literal("None");
+                                        if (mode == MacroConfig.GearSwapMode.WARDROBE)
+                                                return Component.literal("Wardrobe");
+                                        if (mode == MacroConfig.GearSwapMode.ROD)
+                                                return Component.literal("Rod Swap");
+                                        if (mode == MacroConfig.GearSwapMode.ROD_2X)
+                                                return Component.literal("Rod 2x Swap");
+                                        return Component.literal(mode.name());
+                                })
                                 .setSaveConsumer(newValue -> MacroConfig.gearSwapMode = newValue)
                                 .build());
 

@@ -57,7 +57,8 @@ public class GearManager {
                     Thread.sleep(400);
                     client.execute(() -> GearManager.swapToFarmingTool(client));
                     Thread.sleep(250);
-                    ClientUtils.sendDebugMessage(client, "Starting farming script after wardrobe swap: " + MacroConfig.getFullRestartCommand());
+                    ClientUtils.sendDebugMessage(client,
+                            "Starting farming script after wardrobe swap: " + MacroConfig.getFullRestartCommand());
                     com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(), 0);
                 } catch (Exception ignored) {
                 }
@@ -295,7 +296,7 @@ public class GearManager {
         // Validate that equipment GUI is actually functional before marking as detected
         int[] guiSlots = { 10, 19, 28, 37 };
         boolean hasValidEquipmentSlots = true;
-        
+
         // Check if at least one equipment slot has a valid item (not empty/loading)
         boolean foundValidSlot = false;
         for (int slotIdx : guiSlots) {
@@ -312,10 +313,11 @@ public class GearManager {
                 }
             }
         }
-        
+
         if (!foundValidSlot) {
             // Equipment GUI open but data not loaded yet
-            ClientUtils.sendDebugMessage(client, "Equipment GUI open but data not loaded yet (no valid equipment slots detected)");
+            ClientUtils.sendDebugMessage(client,
+                    "Equipment GUI open but data not loaded yet (no valid equipment slots detected)");
             return;
         }
 
@@ -360,6 +362,33 @@ public class GearManager {
                         }
 
                         if (isEquipmentType) {
+                            // Only count as remaining if we haven't already equipped this type of gear
+                            int slotGroup = -1;
+                            for (int k = 0; k < keywords.length; k++) {
+                                for (String kw : keywords[k].split("\\|")) {
+                                    if (invItemName.contains(kw)) {
+                                        slotGroup = k;
+                                        break;
+                                    }
+                                }
+                                if (slotGroup != -1)
+                                    break;
+                            }
+
+                            if (slotGroup != -1) {
+                                Slot targetSlot = screen.getMenu().getSlot(guiSlots[slotGroup]);
+                                if (targetSlot != null && targetSlot.hasItem()) {
+                                    String targetName = targetSlot.getItem().getHoverName().getString().toLowerCase();
+                                    boolean targetIsFarming = targetName.contains("lotus")
+                                            || targetName.contains("blossom")
+                                            || targetName.contains("zorro");
+                                    boolean targetIsPest = targetName.contains("pest");
+                                    boolean targetMatches = swappingToFarmingGear ? targetIsFarming : targetIsPest;
+                                    if (targetMatches)
+                                        continue;
+                                }
+                            }
+
                             targetRemaining = true;
                             break;
                         }
@@ -368,10 +397,15 @@ public class GearManager {
             }
 
             if (targetRemaining) {
+                ClientUtils.sendDebugMessage(client,
+                        "§eEquipment swap: Target items still in inventory after attempt, retrying sequence...");
+                equipmentTargetIndex = 0;
+                equipmentInteractionStage = 0;
+                equipmentInteractionTime = now;
                 return;
             }
 
-            ClientUtils.sendDebugMessage(client, "Equipment swap successful");
+            ClientUtils.sendDebugMessage(client, "§aEquipment swap successful!");
             trackedIsPestGear = !swappingToFarmingGear;
             isSwappingEquipment = false;
             // Close the screen client-side immediately (no server round-trip needed).
@@ -395,8 +429,31 @@ public class GearManager {
 
         // Stage 0: Verify if swap is needed and search for desired item in inventory
         if (equipmentInteractionStage == 0) {
-            if (!carried.isEmpty())
-                return; // Wait for cursor to be empty
+            if (!carried.isEmpty()) {
+                String carriedName = carried.getHoverName().getString().toLowerCase();
+                boolean isFarming = carriedName.contains("lotus") || carriedName.contains("blossom")
+                        || carriedName.contains("zorro");
+                boolean isPest = carriedName.contains("pest");
+                boolean matchesTarget = swappingToFarmingGear ? isFarming : isPest;
+
+                if (matchesTarget) {
+                    for (int i = 0; i < keywords.length; i++) {
+                        for (String type : keywords[i].split("\\|")) {
+                            if (carriedName.contains(type)) {
+                                ClientUtils.sendDebugMessage(client, "§eEquipment swap: Item " + carriedName
+                                        + " stuck in cursor, trying to equip to slot " + (i + 1));
+                                equipmentTargetIndex = i;
+                                equipmentInteractionStage = 1;
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                ClientUtils.sendDebugMessage(client,
+                        "§cEquipment swap: Waiting for cursor to clear (" + carriedName + ")");
+                return;
+            }
 
             // First, check if the slot already has the correct gear
             Slot equipmentSlot = screen.getMenu().getSlot(guiSlots[equipmentTargetIndex]);
@@ -408,6 +465,8 @@ public class GearManager {
                 boolean matches = swappingToFarmingGear ? isFarming : isPest;
 
                 if (matches) {
+                    ClientUtils.sendDebugMessage(client,
+                            "§7Slot " + (equipmentTargetIndex + 1) + " already has correct gear.");
                     equipmentTargetIndex++;
                     equipmentInteractionTime = now;
                     return;
@@ -435,6 +494,7 @@ public class GearManager {
                         }
 
                         if (typeMatch) {
+                            ClientUtils.sendDebugMessage(client, "§bPicking up target item: " + invItemName);
                             client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, invSlot.index, 0,
                                     ClickType.PICKUP, client.player);
                             equipmentInteractionTime = now;
@@ -456,10 +516,13 @@ public class GearManager {
         // We don't need to handle the old gear placement - it can stay in cursor.
         if (equipmentInteractionStage == 1) {
             if (carried.isEmpty()) {
+                ClientUtils.sendDebugMessage(client, "§cEquipment swap: Cursor empty in stage 1, resetting to search.");
                 equipmentInteractionStage = 0; // Failed to pick up?
                 return;
             }
             int gearSlotIdx = guiSlots[equipmentTargetIndex];
+            ClientUtils.sendDebugMessage(client,
+                    "§bEquipping " + carried.getHoverName().getString() + " into slot " + (equipmentTargetIndex + 1));
             client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, gearSlotIdx, 0,
                     ClickType.PICKUP, client.player);
             equipmentInteractionTime = now;
