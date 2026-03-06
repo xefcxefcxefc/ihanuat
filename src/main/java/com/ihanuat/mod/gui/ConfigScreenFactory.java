@@ -179,22 +179,11 @@ public class ConfigScreenFactory {
                 ConfigCategory wardrobe = builder.getOrCreateCategory(Component.literal("Wardrobe Swap"));
 
                 wardrobe.addEntry(builder.entryBuilder()
-                                .startEnumSelector(Component.literal("Wardrobe/Rod Swap Mode"),
-                                                MacroConfig.GearSwapMode.class,
-                                                MacroConfig.gearSwapMode)
-                                .setDefaultValue(MacroConfig.DEFAULT_GEAR_SWAP_MODE)
-                                .setEnumNameProvider(mode -> {
-                                        if (mode == MacroConfig.GearSwapMode.NONE)
-                                                return Component.literal("None");
-                                        if (mode == MacroConfig.GearSwapMode.WARDROBE)
-                                                return Component.literal("Wardrobe");
-                                        if (mode == MacroConfig.GearSwapMode.ROD)
-                                                return Component.literal("Rod Swap");
-                                        if (mode == MacroConfig.GearSwapMode.ROD_2X)
-                                                return Component.literal("Rod 2x Swap");
-                                        return Component.literal(mode.name());
-                                })
-                                .setSaveConsumer(newValue -> MacroConfig.gearSwapMode = newValue)
+                                .startBooleanToggle(Component.literal("Auto Wardrobe"), MacroConfig.autoWardrobe)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_WARDROBE)
+                                .setTooltip(Component.literal(
+                                                "Automatically swap wardrobe slots for Farming, Pest Cleaning, and Visitor sequences."))
+                                .setSaveConsumer(newValue -> MacroConfig.autoWardrobe = newValue)
                                 .build());
 
                 wardrobe.addEntry(builder.entryBuilder()
@@ -216,6 +205,35 @@ public class ConfigScreenFactory {
                                                 MacroConfig.wardrobeSlotVisitor, 1, 9)
                                 .setDefaultValue(MacroConfig.DEFAULT_WARDROBE_SLOT_VISITOR)
                                 .setSaveConsumer(newValue -> MacroConfig.wardrobeSlotVisitor = newValue)
+                                .build());
+
+                // --- Auto Rod Category ---
+                ConfigCategory autoRod = builder.getOrCreateCategory(Component.literal("Auto Rod"));
+
+                autoRod.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Rod on Pest CD"), MacroConfig.autoRodPestCd)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_ROD_PEST_CD)
+                                .setTooltip(Component.literal(
+                                                "Trigger rod swap/use sequence when prep-swapping for pests (cooldown)."))
+                                .setSaveConsumer(newValue -> MacroConfig.autoRodPestCd = newValue)
+                                .build());
+
+                autoRod.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Rod on Pest Spawn"),
+                                                MacroConfig.autoRodPestSpawn)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_ROD_PEST_SPAWN)
+                                .setTooltip(Component.literal(
+                                                "Trigger rod swap/use sequence when starting a pest cleaning sequence."))
+                                .setSaveConsumer(newValue -> MacroConfig.autoRodPestSpawn = newValue)
+                                .build());
+
+                autoRod.addEntry(builder.entryBuilder()
+                                .startBooleanToggle(Component.literal("Rod on Return to Farm"),
+                                                MacroConfig.autoRodReturnToFarm)
+                                .setDefaultValue(MacroConfig.DEFAULT_AUTO_ROD_RETURN_TO_FARM)
+                                .setTooltip(Component.literal(
+                                                "Trigger rod swap/use sequence when returning to farming after pest/visitor sequence."))
+                                .setSaveConsumer(newValue -> MacroConfig.autoRodReturnToFarm = newValue)
                                 .build());
 
                 // --- Equipment Swap Category ---

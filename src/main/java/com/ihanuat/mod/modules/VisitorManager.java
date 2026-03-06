@@ -139,8 +139,8 @@ public class VisitorManager {
 
         ClientUtils.waitForGearAndGui(client);
 
-        if (MacroConfig.gearSwapMode == MacroConfig.GearSwapMode.ROD_2X) {
-            ClientUtils.sendDebugMessage(client, "ROD 2X: Triggering second rod cast (VisitorManager)...");
+        if (MacroConfig.autoRodReturnToFarm) {
+            ClientUtils.sendDebugMessage(client, "Auto Rod: Triggering second rod cast (VisitorManager)...");
             GearManager.executeRodSequence(client);
         }
 
