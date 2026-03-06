@@ -189,6 +189,7 @@ public class PestManager {
     }
 
     public static void handlePestCleaningFinished(Minecraft client) {
+        ClientUtils.sendDebugMessage(client, "Pest cleaning finished sequence started.");
         client.player.displayClientMessage(Component.literal("§aPest cleaning finished detected."), true);
         new Thread(() -> {
             try {
@@ -231,7 +232,8 @@ public class PestManager {
                     }
 
                     ClientUtils.waitForGearAndGui(client);
-                    ClientUtils.sendDebugMessage(client, "Wardrobe swap done, now triggering visitor macro");
+                    ClientUtils.sendDebugMessage(client,
+                            "Wardrobe swap done, now triggering visitor macro. Next state: VISITING");
                     MacroStateManager.setCurrentState(MacroState.State.VISITING);
                     ClientUtils.sendDebugMessage(client, "Stopping script: Visitor threshold reached");
                     com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
@@ -248,7 +250,7 @@ public class PestManager {
                 com.ihanuat.mod.util.CommandUtils.warpGarden(client);
                 Thread.sleep(250);
                 isReturningFromPestVisitor = true;
-                ClientUtils.sendDebugMessage(client, "Finalizing return to farm (PestManager)...");
+                ClientUtils.sendDebugMessage(client, "Finalizing return to farm (PestManager). Next state: FARMING");
                 finalizeReturnToFarm(client);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -330,7 +332,8 @@ public class PestManager {
                     Thread.sleep(250);
                 } catch (InterruptedException ignored) {
                 }
-                ClientUtils.sendDebugMessage(client, "Wardrobe swap done, now triggering visitor macro");
+                ClientUtils.sendDebugMessage(client,
+                        "Wardrobe swap done, now triggering visitor macro. Next state: VISITING");
                 ClientUtils.sendDebugMessage(client, "Stopping script: Returning to visitor macro");
                 com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
                 ClientUtils.sendDebugMessage(client, "Starting visitor macro script");
@@ -351,6 +354,7 @@ public class PestManager {
                 ClientUtils.waitForGearAndGui(client);
             }
 
+            ClientUtils.sendDebugMessage(client, "Pest cleaning sequence completed. Next state: FARMING");
             com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
             prepSwappedForCurrentPestCycle = false; // Ensure flag is reset when returning
             ClientUtils.sendDebugMessage(client, "Stopping script: Pest cleaning finished, returning to farming");
