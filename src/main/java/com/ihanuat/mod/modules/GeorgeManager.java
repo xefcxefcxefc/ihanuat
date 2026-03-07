@@ -155,7 +155,7 @@ public class GeorgeManager {
 
         if (isPreparingToSell) {
             if (com.ihanuat.mod.MacroStateManager.getCurrentState() != com.ihanuat.mod.MacroState.State.FARMING ||
-                    PestManager.isCleaningInProgress || PestManager.prepSwappedForCurrentPestCycle ||
+                    PestManager.isCleaningInProgress || PestPrepSwapManager.prepSwappedForCurrentPestCycle ||
                     VisitorManager.getVisitorCount(client) >= MacroConfig.visitorThreshold) {
                 isPreparingToSell = false;
                 client.player.displayClientMessage(
@@ -167,7 +167,7 @@ public class GeorgeManager {
         if (isSelling) {
             // Abort if no longer farming or if a priority event occurs
             if (com.ihanuat.mod.MacroStateManager.getCurrentState() != com.ihanuat.mod.MacroState.State.FARMING ||
-                    PestManager.isCleaningInProgress || PestManager.prepSwappedForCurrentPestCycle ||
+                    PestManager.isCleaningInProgress || PestPrepSwapManager.prepSwappedForCurrentPestCycle ||
                     VisitorManager.getVisitorCount(client) >= MacroConfig.visitorThreshold) {
                 isSelling = false;
                 client.player.displayClientMessage(
@@ -208,7 +208,7 @@ public class GeorgeManager {
         // Don't sell if we are currently swapping gear, cleaning pests, or dealing with
         // visitors
         if (WardrobeManager.isSwappingWardrobe || EquipmentManager.isSwappingEquipment ||
-                PestManager.isCleaningInProgress || PestManager.prepSwappedForCurrentPestCycle)
+                PestManager.isCleaningInProgress || PestPrepSwapManager.prepSwappedForCurrentPestCycle)
             return;
 
         if (VisitorManager.getVisitorCount(client) >= MacroConfig.visitorThreshold)

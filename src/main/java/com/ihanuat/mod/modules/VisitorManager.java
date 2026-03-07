@@ -80,7 +80,7 @@ public class VisitorManager {
                     return;
                 ClientUtils.sendDebugMessage(client, "Warping to garden...");
                 com.ihanuat.mod.util.CommandUtils.warpGarden(client);
-                PestManager.isReturningFromPestVisitor = true;
+                PestReturnManager.isReturningFromPestVisitor = true;
                 if (MacroWorkerThread.shouldAbortTask(client))
                     return;
                 ClientUtils.sendDebugMessage(client, "Finalizing return to farm...");
@@ -173,7 +173,7 @@ public class VisitorManager {
         com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
         ClientUtils.sendDebugMessage(client, "Starting farming script: " + MacroConfig.getFullRestartCommand());
         com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(), 0);
-        PestManager.prepSwappedForCurrentPestCycle = false;
+        PestPrepSwapManager.prepSwappedForCurrentPestCycle = false;
         PestManager.isCleaningInProgress = false;
     }
 

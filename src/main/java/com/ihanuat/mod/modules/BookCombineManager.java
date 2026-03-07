@@ -139,7 +139,7 @@ public class BookCombineManager {
 
         if (isPreparingToCombine) {
             if (com.ihanuat.mod.MacroStateManager.getCurrentState() != com.ihanuat.mod.MacroState.State.FARMING
-                    || PestManager.isCleaningInProgress || PestManager.prepSwappedForCurrentPestCycle
+                    || PestManager.isCleaningInProgress || PestPrepSwapManager.prepSwappedForCurrentPestCycle
                     || VisitorManager.getVisitorCount(client) >= MacroConfig.visitorThreshold) {
                 isPreparingToCombine = false;
                 client.player.displayClientMessage(
@@ -150,7 +150,7 @@ public class BookCombineManager {
 
         if (isCombining) {
             if (com.ihanuat.mod.MacroStateManager.getCurrentState() != com.ihanuat.mod.MacroState.State.FARMING
-                    || PestManager.isCleaningInProgress || PestManager.prepSwappedForCurrentPestCycle
+                    || PestManager.isCleaningInProgress || PestPrepSwapManager.prepSwappedForCurrentPestCycle
                     || VisitorManager.getVisitorCount(client) >= MacroConfig.visitorThreshold) {
                 isCombining = false;
                 client.player.displayClientMessage(
@@ -169,7 +169,7 @@ public class BookCombineManager {
         }
 
         if (WardrobeManager.isSwappingWardrobe || EquipmentManager.isSwappingEquipment ||
-                PestManager.isCleaningInProgress || PestManager.prepSwappedForCurrentPestCycle ||
+                PestManager.isCleaningInProgress || PestPrepSwapManager.prepSwappedForCurrentPestCycle ||
                 GeorgeManager.isSelling || GeorgeManager.isPreparingToSell ||
                 JunkManager.isDropping || JunkManager.isPreparingToDrop ||
                 (JunkManager.countJunkItems(client) >= MacroConfig.junkThreshold))

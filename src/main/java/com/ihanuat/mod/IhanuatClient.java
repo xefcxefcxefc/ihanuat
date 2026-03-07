@@ -5,6 +5,9 @@ import com.ihanuat.mod.gui.MacroHudRenderer;
 import com.ihanuat.mod.modules.GearManager;
 import com.ihanuat.mod.modules.WardrobeManager;
 import com.ihanuat.mod.modules.PestManager;
+import com.ihanuat.mod.modules.PestAotvManager;
+import com.ihanuat.mod.modules.PestPrepSwapManager;
+import com.ihanuat.mod.modules.PestReturnManager;
 import com.ihanuat.mod.modules.GeorgeManager;
 import com.ihanuat.mod.modules.RecoveryManager;
 import com.ihanuat.mod.modules.DynamicRestManager;
@@ -363,9 +366,9 @@ public class IhanuatClient implements ClientModInitializer {
 
                 if (text.contains("Return To Location")) {
                     if (lowerText.contains("activated")) {
-                        PestManager.isReturnToLocationActive = true;
+                        PestReturnManager.isReturnToLocationActive = true;
                     } else if (lowerText.contains("stopped")) {
-                        PestManager.isReturnToLocationActive = false;
+                        PestReturnManager.isReturnToLocationActive = false;
                     }
                 }
 
@@ -416,7 +419,7 @@ public class IhanuatClient implements ClientModInitializer {
                             if (MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING)) {
                                 return;
                             }
-                            if (PestManager.prepSwappedForCurrentPestCycle
+                            if (PestPrepSwapManager.prepSwappedForCurrentPestCycle
                                     && WardrobeManager.trackedWardrobeSlot != MacroConfig.wardrobeSlotFarming) {
                                 client.execute(
                                         () -> GearManager.ensureWardrobeSlot(client, MacroConfig.wardrobeSlotFarming));
@@ -430,7 +433,7 @@ public class IhanuatClient implements ClientModInitializer {
                             if (MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING)) {
                                 return;
                             }
-                            if (PestManager.isCleaningInProgress || PestManager.isPrepSwapping)
+                            if (PestManager.isCleaningInProgress || PestPrepSwapManager.isPrepSwapping)
                                 return;
 
                             GearManager.swapToFarmingToolSync(client);
@@ -438,14 +441,14 @@ public class IhanuatClient implements ClientModInitializer {
                                 ClientUtils.sendDebugMessage(client, "Auto Rod: Executing rod cast during startup.");
                                 RodManager.executeRodSequence(client);
                             }
-                            if (PestManager.isCleaningInProgress || PestManager.isPrepSwapping)
+                            if (PestManager.isCleaningInProgress || PestPrepSwapManager.isPrepSwapping)
                                 return;
 
                             com.ihanuat.mod.util.CommandUtils.stopScript(client, 250);
                             if (MacroWorkerThread.shouldAbortTask(client, MacroState.State.FARMING)) {
                                 return;
                             }
-                            if (PestManager.isCleaningInProgress || PestManager.isPrepSwapping)
+                            if (PestManager.isCleaningInProgress || PestPrepSwapManager.isPrepSwapping)
                                 return;
 
                             com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(),
@@ -500,7 +503,7 @@ public class IhanuatClient implements ClientModInitializer {
             ProfitManager.update(client);
             com.ihanuat.mod.modules.DiscordStatusManager.update(client);
 
-            if (PestManager.isSneakingForAotv) {
+            if (PestAotvManager.isSneakingForAotv) {
                 if (client.options != null) {
                     client.options.keyShift.setDown(true);
                 }
@@ -511,37 +514,37 @@ public class IhanuatClient implements ClientModInitializer {
             }
 
             // Double-tap Space Flight Toggle
-            if (PestManager.isStoppingFlight) {
-                PestManager.flightStopTicks++;
-                switch (PestManager.flightStopStage) {
+            if (PestReturnManager.isStoppingFlight) {
+                PestReturnManager.flightStopTicks++;
+                switch (PestReturnManager.flightStopStage) {
                     case 0: // Press
                         if (client.options.keyJump != null)
                             net.minecraft.client.KeyMapping.set(client.options.keyJump.getDefaultKey(), true);
-                        if (PestManager.flightStopTicks >= 2) {
-                            PestManager.flightStopStage = 1;
-                            PestManager.flightStopTicks = 0;
+                        if (PestReturnManager.flightStopTicks >= 2) {
+                            PestReturnManager.flightStopStage = 1;
+                            PestReturnManager.flightStopTicks = 0;
                         }
                         break;
                     case 1: // Release
                         if (client.options.keyJump != null)
                             net.minecraft.client.KeyMapping.set(client.options.keyJump.getDefaultKey(), false);
-                        if (PestManager.flightStopTicks >= 3) {
-                            PestManager.flightStopStage = 2;
-                            PestManager.flightStopTicks = 0;
+                        if (PestReturnManager.flightStopTicks >= 3) {
+                            PestReturnManager.flightStopStage = 2;
+                            PestReturnManager.flightStopTicks = 0;
                         }
                         break;
                     case 2: // Press
                         if (client.options.keyJump != null)
                             net.minecraft.client.KeyMapping.set(client.options.keyJump.getDefaultKey(), true);
-                        if (PestManager.flightStopTicks >= 2) {
-                            PestManager.flightStopStage = 3;
-                            PestManager.flightStopTicks = 0;
+                        if (PestReturnManager.flightStopTicks >= 2) {
+                            PestReturnManager.flightStopStage = 3;
+                            PestReturnManager.flightStopTicks = 0;
                         }
                         break;
                     case 3: // Done
                         if (client.options.keyJump != null)
                             net.minecraft.client.KeyMapping.set(client.options.keyJump.getDefaultKey(), false);
-                        PestManager.isStoppingFlight = false;
+                        PestReturnManager.isStoppingFlight = false;
                         break;
                 }
             }
