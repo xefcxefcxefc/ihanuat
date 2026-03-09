@@ -195,4 +195,20 @@ public class WardrobeManager {
             });
         }
     }
+
+    /**
+     * Force-completes the wardrobe swap when detection fails. Used as a failsafe
+     * when the detection system doesn't properly verify swap completion.
+     */
+    public static void forceWardrobeCompletionFailsafe(Minecraft client) {
+        if (isSwappingWardrobe && shouldRestartFarmingAfterSwap) {
+            ClientUtils.sendDebugMessage(client,
+                    "§eWardrobe swap failsafe triggered: forcing completion and resuming farming");
+            trackedWardrobeSlot = targetWardrobeSlot;
+            isSwappingWardrobe = false;
+            wardrobeGuiDetected = false;
+            handleWardrobeCompletion(client);
+        }
+    }
 }
+

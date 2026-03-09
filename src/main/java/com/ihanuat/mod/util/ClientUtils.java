@@ -309,13 +309,31 @@ public class ClientUtils {
 
     public static void waitForGearAndGui(Minecraft client) {
         try {
-            // Wait for Wardrobe swap
-            while (com.ihanuat.mod.modules.WardrobeManager.isSwappingWardrobe)
+            // Wait for Wardrobe swap with timeout failsafe
+            long wardrobeStart = System.currentTimeMillis();
+            while (com.ihanuat.mod.modules.WardrobeManager.isSwappingWardrobe
+                    && System.currentTimeMillis() - wardrobeStart < 3000) {
                 Thread.sleep(50);
+            }
+            // Force-failsafe: if wardrobe swap is still pending after timeout, trigger completion and continue
+            if (com.ihanuat.mod.modules.WardrobeManager.isSwappingWardrobe) {
+                sendDebugMessage(client,
+                        "§eWARNING: Wardrobe swap detection timeout. Force-completing and resuming sequence...");
+                com.ihanuat.mod.modules.WardrobeManager.forceWardrobeCompletionFailsafe(client);
+            }
 
-            // Wait for Equipment swap
-            while (com.ihanuat.mod.modules.EquipmentManager.isSwappingEquipment)
+            // Wait for Equipment swap with timeout failsafe
+            long equipStart = System.currentTimeMillis();
+            while (com.ihanuat.mod.modules.EquipmentManager.isSwappingEquipment
+                    && System.currentTimeMillis() - equipStart < 3000) {
                 Thread.sleep(50);
+            }
+            // Force-failsafe: if equipment swap is still pending after timeout, reset and continue
+            if (com.ihanuat.mod.modules.EquipmentManager.isSwappingEquipment) {
+                sendDebugMessage(client,
+                        "§eWARNING: Equipment swap detection timeout. Force-resetting and continuing sequence...");
+                com.ihanuat.mod.modules.EquipmentManager.resetState();
+            }
 
             // Check for any open GUI (wardrobe, equipment, or any other menu)
             long guiStart = System.currentTimeMillis();
