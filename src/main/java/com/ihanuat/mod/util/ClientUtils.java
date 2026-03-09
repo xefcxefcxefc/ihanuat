@@ -312,7 +312,7 @@ public class ClientUtils {
             // Wait for Wardrobe swap with timeout failsafe
             long wardrobeStart = System.currentTimeMillis();
             while (com.ihanuat.mod.modules.WardrobeManager.isSwappingWardrobe
-                    && System.currentTimeMillis() - wardrobeStart < 3000) {
+                    && System.currentTimeMillis() - wardrobeStart < 6000) {
                 Thread.sleep(50);
             }
             // Force-failsafe: if wardrobe swap is still pending after timeout, trigger completion and continue
@@ -325,7 +325,7 @@ public class ClientUtils {
             // Wait for Equipment swap with timeout failsafe
             long equipStart = System.currentTimeMillis();
             while (com.ihanuat.mod.modules.EquipmentManager.isSwappingEquipment
-                    && System.currentTimeMillis() - equipStart < 3000) {
+                    && System.currentTimeMillis() - equipStart < 6000) {
                 Thread.sleep(50);
             }
             // Force-failsafe: if equipment swap is still pending after timeout, reset and continue

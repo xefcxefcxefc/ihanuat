@@ -116,13 +116,13 @@ public class WardrobeManager {
         if (stack.isEmpty() || stack.getItem().toString().toLowerCase().contains("air")
                 || stack.getItem().toString().toLowerCase().contains("gray_dye")
                 || stack.getHoverName().getString().toLowerCase().contains("gray dye")) {
-            ClientUtils.sendDebugMessage(client, "Wardrobe GUI open but data not loaded yet (gray dye/empty detected)");
+            ClientUtils.sendDebugMessage(client, "§6[Wardrobe Debug] GUI open but data not loaded yet (gray dye/empty detected). Target slot: " + targetWardrobeSlot);
             return;
         }
 
         if (!wardrobeGuiDetected) {
             wardrobeGuiDetected = true;
-            ClientUtils.sendDebugMessage(client, "Wardrobe GUI detected AND VALIDATED as functional");
+            ClientUtils.sendDebugMessage(client, "§6[Wardrobe Debug] GUI detected AND VALIDATED. Ready to click slot " + targetWardrobeSlot);
             wardrobeInteractionTime = System.currentTimeMillis();
         }
 
@@ -137,10 +137,12 @@ public class WardrobeManager {
                 trackedWardrobeSlot = targetWardrobeSlot;
                 isSwappingWardrobe = false;
                 client.player.closeContainer();
+                ClientUtils.sendDebugMessage(client, "§6[Wardrobe Debug] Slot " + targetWardrobeSlot + " was already active. Skipping swap.");
                 handleWardrobeCompletion(client);
                 return;
             }
 
+            ClientUtils.sendDebugMessage(client, "§6[Wardrobe Debug] Clicking slot " + targetWardrobeSlot + " (item: " + stack.getHoverName().getString() + ")");
             client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, 0, ClickType.PICKUP,
                     client.player);
             wardrobeInteractionTime = now;
@@ -163,12 +165,24 @@ public class WardrobeManager {
 
             if (itemName.contains("green_dye") || hoverName.contains("green dye") || itemName.contains("lime_dye")
                     || hoverName.contains("lime dye")) {
-                ClientUtils.sendDebugMessage(client, "Wardrobe swap successful");
+                ClientUtils.sendDebugMessage(client, "§aWardrobe swap detected (green dye visible). Target slot: "
+                        + targetWardrobeSlot + ", Confirmed active slot: " + targetWardrobeSlot);
                 trackedWardrobeSlot = targetWardrobeSlot;
                 isSwappingWardrobe = false;
                 client.player.closeContainer();
-                handleWardrobeCompletion(client);
+                // Add small delay to ensure server receives the close packet and swap confirmation
+                wardrobeInteractionTime = now;
+                wardrobeInteractionStage = 2;
             }
+        } else if (wardrobeInteractionStage == 2) {
+            long lastClickElapsed = now - wardrobeInteractionTime;
+            if (lastClickElapsed < 250)
+                return;
+            // Final validation: confirm swap completed and trigger farming restart
+            ClientUtils.sendDebugMessage(client, "§aWARDROBE SWAP COMPLETE: Active slot is now " + trackedWardrobeSlot
+                    + " (target was " + targetWardrobeSlot + ")");
+            handleWardrobeCompletion(client);
+            wardrobeInteractionStage = 0;
         }
     }
 
