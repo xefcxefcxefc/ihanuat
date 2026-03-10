@@ -92,8 +92,24 @@ public class JunkManager {
         return count;
     }
 
+    private static boolean isFarmingTool(ItemStack stack) {
+        if (stack == null || stack.isEmpty())
+            return false;
+        String[] keywords = { "hoe", "dicer", "knife", "chopper", "cutter", "axe" };
+        String name = stack.getHoverName().getString().toLowerCase();
+        for (String kw : keywords) {
+            if (name.contains(kw))
+                return true;
+        }
+        return false;
+    }
+
     private static boolean isJunkItem(ItemStack stack, List<String> junkList) {
         if (stack == null || stack.isEmpty())
+            return false;
+
+        // Exclude farming tools - they can be enchanted with junk items
+        if (isFarmingTool(stack))
             return false;
 
         // Check Display Name

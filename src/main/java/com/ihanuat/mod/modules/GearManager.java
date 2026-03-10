@@ -138,7 +138,7 @@ public class GearManager {
     public static int findFarmingToolSlot(Minecraft client) {
         if (client.player == null)
             return -1;
-        String[] keywords = { "hoe", "dicer", "knife", "chopper", "cutter" };
+        String[] keywords = { "hoe", "dicer", "knife", "chopper", "cutter", "axe" };
         for (int i = 0; i < 9; i++) {
             ItemStack stack = client.player.getInventory().getItem(i);
             String name = stack.getHoverName().getString().toLowerCase();
