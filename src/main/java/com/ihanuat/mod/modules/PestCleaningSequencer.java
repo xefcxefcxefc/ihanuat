@@ -27,21 +27,13 @@ public class PestCleaningSequencer {
 
         MacroWorkerThread.getInstance().submit("CleaningSequence-" + plot, () -> {
             try {
-                // Retry /setspawn up to 3 times to ensure it's confirmed before AOTV
-                boolean spawnSet = false;
-                for (int attempt = 1; attempt <= 3; attempt++) {
-                    if (MacroWorkerThread.shouldAbortTask(client))
-                        return;
-                    spawnSet = com.ihanuat.mod.util.CommandUtils.setSpawn(client);
-                    if (spawnSet)
-                        break;
-                    ClientUtils.sendDebugMessage(client,
-                            "setSpawn attempt " + attempt + " timed out, retrying...");
-                }
-                if (!spawnSet) {
+                // Set spawn with 10s timeout (increased in CommandUtils)
+                if (MacroWorkerThread.shouldAbortTask(client))
+                    return;
+                if (!com.ihanuat.mod.util.CommandUtils.setSpawn(client)) {
                     client.player.displayClientMessage(
                             net.minecraft.network.chat.Component.literal(
-                                    "§c[Ihanuat] /setspawn failed after 3 attempts — aborting pest cleaning to prevent roof spawn."),
+                                    "§c[Ihanuat] /setspawn timed out — aborting pest cleaning to prevent roof spawn."),
                             false);
                     PestManager.isCleaningInProgress = false;
                     com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
