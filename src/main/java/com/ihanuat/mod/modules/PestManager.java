@@ -13,13 +13,27 @@ public class PestManager {
     public static volatile boolean isCleaningInProgress = false;
     public static volatile String currentInfestedPlot = null;
     public static volatile int currentPestSessionId = 0;
+    private static final long PEST_REENTRY_COOLDOWN_MS = 30_000;
     private static long lastZeroPestTime = 0;
     private static volatile int predictedAliveCount = 0;
     private static volatile long lastChatSpawnUpdateMs = 0;
+    private static volatile long pestReentryCooldownUntilMs = 0;
     private static final long TAB_SYNC_GRACE_MS = 5000;
 
     private static boolean isThresholdMet(int aliveCount) {
         return aliveCount >= MacroConfig.pestThreshold || aliveCount >= 8;
+    }
+
+    private static boolean isPestReentryCooldownActive() {
+        return getPestReentryCooldownRemainingMs() > 0;
+    }
+
+    private static long getPestReentryCooldownRemainingMs() {
+        return Math.max(0L, pestReentryCooldownUntilMs - System.currentTimeMillis());
+    }
+
+    private static void startPestReentryCooldown() {
+        pestReentryCooldownUntilMs = System.currentTimeMillis() + PEST_REENTRY_COOLDOWN_MS;
     }
 
     public static void reset() {
@@ -28,6 +42,7 @@ public class PestManager {
         lastZeroPestTime = 0;
         predictedAliveCount = 0;
         lastChatSpawnUpdateMs = 0;
+        pestReentryCooldownUntilMs = 0;
         currentPestSessionId++;
         
         PestPrepSwapManager.resetState();
@@ -89,6 +104,9 @@ public class PestManager {
 
         // Check if cleaning should be triggered
         if (isThresholdMet(effectiveAlive)) {
+            if (isPestReentryCooldownActive()) {
+                return;
+            }
             if (effectiveAlive >= 8 && effectiveAlive < 99) {
                 client.player.displayClientMessage(Component.literal("§eMax Pests (8) reached. Starting cleaning..."),
                         true);
@@ -118,6 +136,15 @@ public class PestManager {
                         "Chat pest trigger ignored: effective=" + effectiveAlive
                                 + " (chat=" + predictedAliveCount + ", tab=" + data.aliveCount
                                 + ") < threshold=" + MacroConfig.pestThreshold);
+            }
+            return false;
+        }
+
+        if (isPestReentryCooldownActive()) {
+            if (MacroConfig.showDebug) {
+                ClientUtils.sendDebugMessage(client,
+                        "Chat pest trigger ignored: pest re-entry cooldown active for "
+                                + getPestReentryCooldownRemainingMs() + "ms.");
             }
             return false;
         }
@@ -155,6 +182,9 @@ public class PestManager {
     }
 
     public static void handlePestCleaningFinished(Minecraft client) {
+        if (!PestReturnManager.isFinishingInProgress) {
+            startPestReentryCooldown();
+        }
         PestReturnManager.handlePestCleaningFinished(client);
     }
 
@@ -163,6 +193,9 @@ public class PestManager {
     }
 
     public static void startCleaningSequence(Minecraft client, String plot) {
+        if (isPestReentryCooldownActive()) {
+            return;
+        }
         currentInfestedPlot = plot;
         currentPestSessionId++;
         PestCleaningSequencer.startCleaningSequence(client, plot, currentInfestedPlot, currentPestSessionId);
