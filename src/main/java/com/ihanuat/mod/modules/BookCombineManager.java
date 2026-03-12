@@ -26,6 +26,9 @@ public class BookCombineManager {
     public static volatile boolean isCombining = false;
     public static volatile boolean isPreparingToCombine = false;
 
+    public static volatile long lastCombineCallTime = 0;
+    private static final long COMBINE_RECALL_DELAY_MS = 1000;
+
     public static void reset() {
         isCombining = false;
         isPreparingToCombine = false;
@@ -39,6 +42,37 @@ public class BookCombineManager {
         if (!MacroConfig.autoBookCombine || screen == null || client.player == null)
             return;
 
+        String rawTitle = screen.getTitle().getString();
+        String title = rawTitle.replaceAll("(?i)§.", "").toLowerCase();
+
+        if (!isCombining && !isPreparingToCombine) {
+            // Failsafe: if Anvil GUI is open but we aren't combining, close it if we are
+            // farming
+            if (title.contains("anvil") && com.ihanuat.mod.MacroStateManager.isMacroRunning() &&
+                    com.ihanuat.mod.MacroStateManager.getCurrentState() == com.ihanuat.mod.MacroState.State.FARMING) {
+
+                int bookCount = countBooksInInventory(client);
+                if (bookCount < MacroConfig.bookThreshold) {
+                    client.player.displayClientMessage(
+                            Component.literal("§c[Ihanuat] Unexpected Anvil GUI detected. Restarting script..."),
+                            false);
+                    client.player.closeContainer();
+
+                    MacroWorkerThread.getInstance().submit("BookCombine-UnexpectedGUI-Restart", () -> {
+                        if (MacroWorkerThread.shouldAbortTask(client, com.ihanuat.mod.MacroState.State.FARMING))
+                            return;
+                        com.ihanuat.mod.util.CommandUtils.stopScript(client, 0);
+                        MacroWorkerThread.sleep(1000);
+                        if (MacroWorkerThread.shouldAbortTask(client, com.ihanuat.mod.MacroState.State.FARMING))
+                            return;
+                        ClientUtils.sendDebugMessage(client, "Restarting script after unexpected Anvil GUI closure");
+                        com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(), 0);
+                    });
+                }
+            }
+            return;
+        }
+
         if (!MacroConfig.alwaysActiveCombine && !isCombining)
             return;
 
@@ -46,16 +80,14 @@ public class BookCombineManager {
         if (now - interactionTime < MacroConfig.getRandomizedDelay(MacroConfig.bookCombineDelay))
             return;
 
-        String title = screen.getTitle().getString();
-        if (!title.toLowerCase().contains("anvil"))
+        if (!title.contains("anvil"))
             return;
 
         int totalSlots = screen.getMenu().slots.size();
         if (totalSlots < 54)
             return;
 
-        // Stage 0: Scan inventory, find a combinable pair. Pre-store BOTH slot indices,
-        // then click the first one. We do NOT re-scan in later stages.
+        // Stage 0: Search for a pair to combine
         if (interactionStage == 0) {
             Map<String, List<Integer>> bookPairs = getInventoryBooks(screen);
 
@@ -69,7 +101,6 @@ public class BookCombineManager {
                 if (isMaxLevel(key))
                     continue;
 
-                // Lock in both slot indices before touching anything
                 pendingSlot0 = slots.get(0);
                 pendingSlot1 = slots.get(1);
 
@@ -85,13 +116,10 @@ public class BookCombineManager {
                 return;
             }
 
-            // No combinable pairs — nothing to do
-            pendingSlot0 = -1;
-            pendingSlot1 = -1;
+            // No more pairs - finish
             finishCombining(client);
         }
-        // Stage 1: Click the pre-stored second book (same type guaranteed since both
-        // slots were frozen in stage 0 before any clicking)
+        // Stage 1: Add the second book
         else if (interactionStage == 1) {
             if (pendingSlot1 == -1) {
                 interactionStage = 0;
@@ -102,34 +130,36 @@ public class BookCombineManager {
             interactionTime = now;
             interactionStage = 2;
         }
-        // Stage 2: Pick up the combined result from the output slot (slot 22)
+        // Stage 2: Click the Anvil item (slot 22) to combine
         else if (interactionStage == 2) {
-            client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, 22, 0, ClickType.PICKUP,
-                    client.player);
-            interactionTime = now;
-            interactionStage = 3;
-        }
-        // Stage 3: Place the result back in inventory
-        else if (interactionStage == 3) {
-            client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, 22, 0, ClickType.PICKUP,
-                    client.player);
-            interactionTime = now;
-            interactionStage = 0;
-            pendingSlot0 = -1;
-            pendingSlot1 = -1;
+            Slot outputSlot = screen.getMenu().slots.get(22);
+            if (outputSlot != null && outputSlot.hasItem()) {
+                String itemName = outputSlot.getItem().getHoverName().getString().toLowerCase();
+                String itemId = outputSlot.getItem().getItem().toString().toLowerCase();
 
-            // After one successful combine, check if more pairs exist
-            Map<String, List<Integer>> remainingPairs = getInventoryBooks(screen);
-            boolean hasMore = false;
-            for (Map.Entry<String, List<Integer>> entry : remainingPairs.entrySet()) {
-                if (entry.getValue().size() >= 2 && !isMaxLevel(entry.getKey())) {
-                    hasMore = true;
-                    break;
+                if (itemName.contains("combine") || itemId.contains("anvil")) {
+                    client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, 22, 0, ClickType.PICKUP,
+                            client.player);
+                    interactionTime = now;
+                    interactionStage = 3;
                 }
             }
+        }
+        // Stage 3: Click the Sign item (slot 22) to claim and reset to Stage 0
+        else if (interactionStage == 3) {
+            Slot outputSlot = screen.getMenu().slots.get(22);
+            if (outputSlot != null && outputSlot.hasItem()) {
+                String itemName = outputSlot.getItem().getHoverName().getString().toLowerCase();
+                String itemId = outputSlot.getItem().getItem().toString().toLowerCase();
 
-            if (!hasMore && isCombining) {
-                finishCombining(client);
+                if (itemName.contains("claim") || itemId.contains("sign")) {
+                    client.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, 22, 0, ClickType.PICKUP,
+                            client.player);
+                    interactionTime = now;
+                    interactionStage = 0; // Restart loop within GUI
+                    pendingSlot0 = -1;
+                    pendingSlot1 = -1;
+                }
             }
         }
     }
@@ -170,20 +200,48 @@ public class BookCombineManager {
 
             // If GUI closed but we were supposed to be combining and still have pairs
             if (client.screen == null) {
+                if (interactionStage > 0) {
+                    interactionStage = 0;
+                }
+
                 long now = System.currentTimeMillis();
-                if (now - interactionTime > 1500) {
-                    finishCombining(client);
+                if (now - interactionTime > 1500 && now - lastCombineCallTime > COMBINE_RECALL_DELAY_MS) {
+                    int bookCount = countBooksInInventory(client);
+                    if (bookCount >= 2) {
+                        client.player.displayClientMessage(
+                                Component.literal(
+                                        "§7GUI closed, but " + (bookCount / 2) + " pairs remain. Re-opening anvil..."),
+                                false);
+                        interactionTime = now;
+                        interactionStage = 0;
+                        lastCombineCallTime = now;
+                        com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/anvil", true);
+                    } else {
+                        finishCombining(client);
+                    }
                 }
             }
             return;
         }
 
-        if (isPriorityEventActive(client) || (JunkManager.countJunkItems(client) >= MacroConfig.junkThreshold))
+        if (isPriorityEventActive(client)) {
             return;
+        }
+
+        if (JunkManager.countJunkItems(client) >= MacroConfig.junkThreshold) {
+            return;
+        }
 
         int bookCount = countBooksInInventory(client);
         if (bookCount >= MacroConfig.bookThreshold) {
             triggerAutomaticCombine(client, bookCount);
+        } else if (bookCount >= 2) {
+            // Debug: Log why we are skipping
+            if (System.currentTimeMillis() - interactionTime > 60000) { // Only log once per minute to avoid spam
+                ClientUtils.sendDebugMessage(client, "BookCombine: Skipping trigger. Pairs found: " + bookCount
+                        + " < threshold: " + MacroConfig.bookThreshold);
+                interactionTime = System.currentTimeMillis();
+            }
         }
     }
 
@@ -207,8 +265,8 @@ public class BookCombineManager {
                 com.ihanuat.mod.util.CommandUtils.stopScript(client, 0);
 
                 boolean success = true;
-                for (int i = 0; i < 50; i++) {
-                    MacroWorkerThread.sleep(100);
+                for (int i = 0; i < 20; i++) {
+                    MacroWorkerThread.sleep(50);
                     if (MacroWorkerThread.shouldAbortTask(client, com.ihanuat.mod.MacroState.State.FARMING)) {
                         success = false;
                         break;
@@ -229,7 +287,9 @@ public class BookCombineManager {
                     isCombining = true;
                     interactionStage = 0;
                     interactionTime = System.currentTimeMillis();
-                    com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/av");
+                    lastCombineCallTime = interactionTime;
+                    // Use forced client-side command to allow other mods to intercept /av
+                    com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/anvil", true);
                 } else {
                     isPreparingToCombine = false;
                 }

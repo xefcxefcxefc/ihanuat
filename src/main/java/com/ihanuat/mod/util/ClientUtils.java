@@ -34,6 +34,10 @@ public class ClientUtils {
     }
 
     public static void sendCommand(Minecraft client, String cmd) {
+        sendCommand(client, cmd, false);
+    }
+
+    public static void sendCommand(Minecraft client, String cmd, boolean forceClientSide) {
         if (client.player == null || client.getConnection() == null)
             return;
 
@@ -49,16 +53,23 @@ public class ClientUtils {
 
         if (cmd.startsWith("/")) {
             client.execute(() -> {
-                if (client.getConnection() != null)
-                    client.getConnection().sendCommand(cmd.substring(1));
+                if (client.player != null) {
+                    if (forceClientSide) {
+                        // Use chat to allow client-side mods (Skytils, NEU) to intercept
+                        client.player.connection.sendChat(cmd);
+                    } else {
+                        // Direct server command
+                        client.player.connection.sendCommand(cmd.substring(1));
+                    }
+                }
             });
         } else {
             if (cmd.equalsIgnoreCase(".ez-stopscript")) {
                 client.execute(() -> forceReleaseKeys(client));
             }
             client.execute(() -> {
-                if (client.getConnection() != null)
-                    client.getConnection().sendChat(cmd);
+                if (client.player != null)
+                    client.player.connection.sendChat(cmd);
             });
         }
 
