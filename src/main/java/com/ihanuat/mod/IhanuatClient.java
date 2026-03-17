@@ -278,6 +278,11 @@ public class IhanuatClient implements ClientModInitializer {
                 String plainText = text.replaceAll("(?i)[\u00A7&][0-9a-fk-or]", "");
                 String lowerPlainText = plainText.toLowerCase();
 
+                if (lowerPlainText.contains("script stopped") && lowerPlainText.contains("remote control")) {
+                    MacroStateManager.stopMacro(Minecraft.getInstance());
+                    return;
+                }
+
                 boolean isPestCleanerFinishSignal = lowerPlainText.contains("pest cleaner")
                         && lowerPlainText.contains("finished")
                         && !lowerPlainText.contains("sprayed plot")
