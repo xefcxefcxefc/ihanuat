@@ -326,7 +326,7 @@ public class IhanuatClient implements ClientModInitializer {
                             "Diagnose: Seen YUCK in chat. Text: " + plainText);
                 }
 
-                if (MacroConfig.triggerPestOnChat && MacroStateManager.isMacroRunning() && lowerText.contains("yuck") && lowerText.contains("plot")) { // only activate if macro is running
+                if (MacroConfig.triggerPestOnChat && lowerText.contains("yuck") && lowerText.contains("plot")) {
                     if (MacroConfig.showDebug) {
                         ClientUtils.sendDebugMessage(Minecraft.getInstance(),
                                 "YUCK detected. State: " + MacroStateManager.getCurrentState());
