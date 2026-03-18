@@ -2,6 +2,7 @@ package com.ihanuat.mod.util;
 
 import com.ihanuat.mod.MacroConfig;
 import com.ihanuat.mod.MacroState;
+import com.ihanuat.mod.MacroWorkerThread;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -53,6 +54,11 @@ public class ClientUtils {
         long diff = now - lastCommandTime;
 
         if (diff < COMMAND_COOLDOWN_MS) {
+            if (client.isSameThread()) {
+                MacroWorkerThread.getInstance().submit("DeferredCommand:" + abbreviateCommandLabel(cmd),
+                        () -> sendCommand(client, cmd, forceClientSide));
+                return;
+            }
             try {
                 Thread.sleep(COMMAND_COOLDOWN_MS - diff);
             } catch (InterruptedException ignored) {
@@ -82,6 +88,14 @@ public class ClientUtils {
         }
 
         lastCommandTime = System.currentTimeMillis();
+    }
+
+    private static String abbreviateCommandLabel(String cmd) {
+        if (cmd == null || cmd.isBlank()) {
+            return "unknown";
+        }
+        String trimmed = cmd.trim();
+        return trimmed.length() <= 24 ? trimmed : trimmed.substring(0, 24);
     }
 
     public static void forceReleaseKeys(Minecraft client) {
