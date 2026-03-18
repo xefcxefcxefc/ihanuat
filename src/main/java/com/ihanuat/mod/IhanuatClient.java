@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 import org.lwjgl.glfw.GLFW;
 
-import com.ihanuat.mod.gui.ConfigScreenFactory;
+import com.ihanuat.mod.gui.ClickGui;
 import com.ihanuat.mod.gui.DynamicRestScreen;
 import com.ihanuat.mod.gui.MacroHudRenderer;
 import com.ihanuat.mod.modules.BookCombineManager;
@@ -50,6 +50,7 @@ public class IhanuatClient implements ClientModInitializer {
 
     private static boolean isHandlingMessage = false;
     private static boolean hasCheckedPersistenceOnJoin = false;
+    private static boolean hasCheckedUpdate = false;
     private static long lastStashPickupTime = 0;
     private static final long STASH_PICKUP_DELAY_MS = 3300;
     private static long lastRewarpTime = 0;
@@ -66,7 +67,6 @@ public class IhanuatClient implements ClientModInitializer {
         ProfitManager.loadLifetime();
         ProfitManager.loadDaily();
         MacroStateManager.syncFromConfig();
-
 
         RestStateManager.clearState();
         MacroHudRenderer.register();
@@ -218,6 +218,10 @@ public class IhanuatClient implements ClientModInitializer {
                 hasCheckedPersistenceOnJoin = true;
                 MacroStateManager.setIntentionalDisconnect(false);
             }
+            if (!hasCheckedUpdate && client.player != null) {
+                hasCheckedUpdate = true;
+                UpdateChecker.checkAndNotify(client);
+            }
         });
 
         Identifier categoryId = Identifier.fromNamespaceAndPath("ihanuat", "main");
@@ -277,11 +281,6 @@ public class IhanuatClient implements ClientModInitializer {
 
                 String plainText = text.replaceAll("(?i)[\u00A7&][0-9a-fk-or]", "");
                 String lowerPlainText = plainText.toLowerCase();
-
-                if (lowerPlainText.contains("script stopped") && lowerPlainText.contains("remote control")) {
-                    MacroStateManager.stopMacro(Minecraft.getInstance());
-                    return;
-                }
 
                 boolean isPestCleanerFinishSignal = lowerPlainText.contains("pest cleaner")
                         && lowerPlainText.contains("finished")
@@ -444,7 +443,7 @@ public class IhanuatClient implements ClientModInitializer {
             if (client.player == null)
                 return;
             while (configKey.consumeClick())
-                client.setScreen(ConfigScreenFactory.createConfigScreen(client.screen));
+                client.setScreen(new ClickGui());
             while (startScriptKey.consumeClick()) {
                 if (MacroStateManager.getCurrentState() == MacroState.State.OFF) {
                     PestManager.reset();
@@ -620,7 +619,7 @@ public class IhanuatClient implements ClientModInitializer {
             if (MacroConfig.autoStashManager && isPickingUpStash && client.player != null) {
                 MacroState.State state = MacroStateManager.getCurrentState();
                 if (client.screen == null && state != MacroState.State.VISITING
-                    && state != MacroState.State.CLEANING && state != MacroState.State.SPRAYING) {
+                        && state != MacroState.State.CLEANING && state != MacroState.State.SPRAYING) {
                     long now = System.currentTimeMillis();
                     if (now - lastStashPickupTime >= STASH_PICKUP_DELAY_MS) {
                         lastStashPickupTime = now;

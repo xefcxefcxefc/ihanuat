@@ -59,7 +59,7 @@ jobs:
           files: build/libs/*.jar
           draft: false
           prerelease: false
-          make_latest: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -103,7 +103,7 @@ jobs:
                 ]
               }]
             }' > payload.json
-            
+          
           if [ -n "$DISCORD_WEBHOOK_URL" ]; then
             curl -H "Content-Type: application/json" -d @payload.json $DISCORD_WEBHOOK_URL
           else

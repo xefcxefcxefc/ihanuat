@@ -288,6 +288,9 @@ public class MacroConfig {
         }
     }
 
+    public static boolean armorSwapVisitor = DEFAULT_ARMOR_SWAP_VISITOR;
+    public static int[][] clickGuiPanelPositions = new int[12][2];
+
     public static long lifetimeAccumulated = 0;
 
     // HUD
@@ -422,6 +425,8 @@ public class MacroConfig {
         data.showLifetimeHud = showLifetimeHud;
 
         data.lifetimeAccumulated = lifetimeAccumulated;
+        data.armorSwapVisitor = armorSwapVisitor;
+        data.clickGuiPanelPositions = clickGuiPanelPositions;
 
         try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
             GSON.toJson(data, writer);
@@ -549,6 +554,9 @@ public class MacroConfig {
                 showLifetimeHud = data.showLifetimeHud;
 
                 lifetimeAccumulated = data.lifetimeAccumulated;
+                armorSwapVisitor = data.armorSwapVisitor;
+                if (data.clickGuiPanelPositions != null)
+                    clickGuiPanelPositions = data.clickGuiPanelPositions;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -650,5 +658,7 @@ public class MacroConfig {
         boolean showLifetimeHud = DEFAULT_SHOW_LIFETIME_HUD;
 
         long lifetimeAccumulated = 0;
+        boolean armorSwapVisitor = DEFAULT_ARMOR_SWAP_VISITOR;
+        int[][] clickGuiPanelPositions = new int[12][2];
     }
 }
