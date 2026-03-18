@@ -289,7 +289,18 @@ public class MacroConfig {
     }
 
     public static boolean armorSwapVisitor = DEFAULT_ARMOR_SWAP_VISITOR;
-    public static int[][] clickGuiPanelPositions = new int[12][2];
+    public static int[][] clickGuiPanelPositions = new int[13][2];
+
+    // theme colors (ARGB)
+    public static int themePanelBg     = 0xF0101018;
+    public static int themePanelHeader = 0xFF18182C;
+    public static int themeAccent      = 0xFF5050A0;
+    public static int themeText        = 0xFFCCCCCC;
+    public static int themeTextDim     = 0xFF666677;
+    public static int themeToggleOn    = 0xFF4444BB;
+    public static int themeToggleOff   = 0xFF2A2A3A;
+    public static int themeSliderFill  = 0xFF3A3A99;
+    public static int themeButtonHover = 0xFF4444BB;
 
     public static long lifetimeAccumulated = 0;
 
@@ -427,6 +438,15 @@ public class MacroConfig {
         data.lifetimeAccumulated = lifetimeAccumulated;
         data.armorSwapVisitor = armorSwapVisitor;
         data.clickGuiPanelPositions = clickGuiPanelPositions;
+        data.themePanelBg     = themePanelBg;
+        data.themePanelHeader = themePanelHeader;
+        data.themeAccent      = themeAccent;
+        data.themeText        = themeText;
+        data.themeTextDim     = themeTextDim;
+        data.themeToggleOn    = themeToggleOn;
+        data.themeToggleOff   = themeToggleOff;
+        data.themeSliderFill  = themeSliderFill;
+        data.themeButtonHover = themeButtonHover;
 
         try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
             GSON.toJson(data, writer);
@@ -557,6 +577,15 @@ public class MacroConfig {
                 armorSwapVisitor = data.armorSwapVisitor;
                 if (data.clickGuiPanelPositions != null)
                     clickGuiPanelPositions = data.clickGuiPanelPositions;
+                themePanelBg     = data.themePanelBg;
+                themePanelHeader = data.themePanelHeader;
+                themeAccent      = data.themeAccent;
+                themeText        = data.themeText;
+                themeTextDim     = data.themeTextDim;
+                themeToggleOn    = data.themeToggleOn;
+                themeToggleOff   = data.themeToggleOff;
+                themeSliderFill  = data.themeSliderFill;
+                themeButtonHover = data.themeButtonHover;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -659,6 +688,15 @@ public class MacroConfig {
 
         long lifetimeAccumulated = 0;
         boolean armorSwapVisitor = DEFAULT_ARMOR_SWAP_VISITOR;
-        int[][] clickGuiPanelPositions = new int[12][2];
+        int[][] clickGuiPanelPositions = new int[13][2];
+        int themePanelBg     = 0xF0101018;
+        int themePanelHeader = 0xFF18182C;
+        int themeAccent      = 0xFF5050A0;
+        int themeText        = 0xFFCCCCCC;
+        int themeTextDim     = 0xFF666677;
+        int themeToggleOn    = 0xFF4444BB;
+        int themeToggleOff   = 0xFF2A2A3A;
+        int themeSliderFill  = 0xFF3A3A99;
+        int themeButtonHover = 0xFF4444BB;
     }
 }
