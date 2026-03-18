@@ -8,6 +8,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 
 public class MacroConfig {
+    private static final long DAY_MS = 24L * 60L * 60L * 1000L;
+    private static final long CORRUPTED_EPOCH_WINDOW_MS = 30L * DAY_MS;
 
     public enum PetRarity {
         COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, MYTHIC
@@ -294,6 +296,16 @@ public class MacroConfig {
     /** Formats 0xRRGGBB as 6-char uppercase hex string. */
     public static String toHexString(int rgb) { return String.format("%06X", rgb & 0xFFFFFF); }
 
+    private static long sanitizeLifetimeAccumulated(long savedValue) {
+        long normalized = Math.max(0L, savedValue);
+        long now = System.currentTimeMillis();
+        if (Math.abs(normalized - now) <= CORRUPTED_EPOCH_WINDOW_MS) {
+            System.err.println("[Ihanuat] Ignoring corrupted lifetime timer value that matched epoch time: " + normalized);
+            return 0L;
+        }
+        return normalized;
+    }
+
     public static int getRandomizedDelay(int baseDelay) {
         if (additionalRandomDelay <= 0) return baseDelay;
         return baseDelay + (int) (Math.random() * (additionalRandomDelay + 1));
@@ -451,6 +463,7 @@ public class MacroConfig {
 
     public static void load() {
         if (!CONFIG_FILE.exists()) { save(); return; }
+        boolean shouldRewriteConfig = false;
         try (FileReader r = new FileReader(CONFIG_FILE)) {
             ConfigData d = GSON.fromJson(r, ConfigData.class);
             if (d == null) return;
@@ -549,7 +562,8 @@ public class MacroConfig {
             lifetimeHudX = d.lifetimeHudX; lifetimeHudY = d.lifetimeHudY;
             lifetimeHudScale = d.lifetimeHudScale > 0 ? d.lifetimeHudScale : DEFAULT_LIFETIME_HUD_SCALE;
             showLifetimeHud = d.showLifetimeHud;
-            lifetimeAccumulated = d.lifetimeAccumulated;
+            lifetimeAccumulated = sanitizeLifetimeAccumulated(d.lifetimeAccumulated);
+            shouldRewriteConfig = lifetimeAccumulated != Math.max(0L, d.lifetimeAccumulated);
             todayDateStr = d.todayDateStr != null ? d.todayDateStr : "";
             todayAccumulatedMs = Math.max(0, d.todayAccumulatedMs);
             hudBgColor           = parseHexColor(d.hudBgColorHex, DEFAULT_HUD_BG_COLOR);
@@ -567,6 +581,7 @@ public class MacroConfig {
             hudStateAutosellingColor = parseHexColor(d.hudStateAutosellingColorHex, DEFAULT_HUD_STATE_AUTOSELLING_COLOR);
             hudStateSprayingColor    = parseHexColor(d.hudStateSprayingColorHex, DEFAULT_HUD_STATE_SPRAYING_COLOR);
         } catch (Exception e) { e.printStackTrace(); }
+        if (shouldRewriteConfig) save();
     }
 
     // ── PetInfo ───────────────────────────────────────────────────────────────

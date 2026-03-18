@@ -29,14 +29,18 @@ public class MacroStateManager {
     }
 
     public static void periodicUpdate() {
-        if (!isMacroRunning()) return;
         // Tick today tracker for day-rollover detection
         TodayTimeTracker.tick();
+        if (currentState == MacroState.State.OFF || currentState == MacroState.State.RECOVERING) return;
 
         long now = System.currentTimeMillis();
+        if (lastSessionStartTime <= 0) {
+            lastPeriodicSaveTime = now;
+            return;
+        }
         if (now - lastPeriodicSaveTime > 60_000) {
             lastPeriodicSaveTime = now;
-            long diff = now - lastSessionStartTime;
+            long diff = Math.max(0L, now - lastSessionStartTime);
             MacroConfig.lifetimeAccumulated = lifetimeAccumulated + diff;
             MacroConfig.save();
         }
