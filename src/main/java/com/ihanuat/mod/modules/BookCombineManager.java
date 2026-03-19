@@ -25,6 +25,7 @@ public class BookCombineManager {
 
     public static volatile boolean isCombining = false;
     public static volatile boolean isPreparingToCombine = false;
+    private static volatile boolean resumeMacroAfterCombine = false;
 
     public static volatile long lastCombineCallTime = 0;
     private static final long COMBINE_RECALL_DELAY_MS = 1000;
@@ -32,6 +33,7 @@ public class BookCombineManager {
     public static void reset() {
         isCombining = false;
         isPreparingToCombine = false;
+        resumeMacroAfterCombine = false;
         interactionStage = 0;
         interactionTime = 0;
         pendingSlot0 = -1;
@@ -48,6 +50,7 @@ public class BookCombineManager {
         if (!isCombining && !isPreparingToCombine) {
             if (MacroConfig.alwaysActiveCombine && title.contains("anvil")) {
                 isCombining = true;
+                resumeMacroAfterCombine = false;
                 interactionStage = 0;
                 interactionTime = System.currentTimeMillis();
             } else {
@@ -209,6 +212,10 @@ public class BookCombineManager {
 
             // If GUI closed but we were supposed to be combining and still have pairs
             if (client.screen == null) {
+                if (!resumeMacroAfterCombine) {
+                    finishCombining(client);
+                    return;
+                }
                 if (interactionStage > 0) {
                     interactionStage = 0;
                 }
@@ -267,6 +274,7 @@ public class BookCombineManager {
 
         isPreparingToCombine = true;
         isCombining = false;
+        resumeMacroAfterCombine = true;
 
         MacroWorkerThread.getInstance().submit("BookCombine-Trigger", () -> {
             try {
@@ -305,6 +313,7 @@ public class BookCombineManager {
                     com.ihanuat.mod.util.ClientUtils.sendCommand(client, "/anvil", true);
                 } else {
                     isPreparingToCombine = false;
+                    resumeMacroAfterCombine = false;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -314,8 +323,11 @@ public class BookCombineManager {
 
     private static void finishCombining(Minecraft client) {
         isCombining = false;
+        isPreparingToCombine = false;
+        boolean shouldResumeMacro = resumeMacroAfterCombine;
+        resumeMacroAfterCombine = false;
 
-        if (client.player != null && client.screen != null) {
+        if (shouldResumeMacro && client.player != null && client.screen != null) {
             client.execute(() -> client.player.closeContainer());
         }
 
@@ -323,7 +335,7 @@ public class BookCombineManager {
             client.player.displayClientMessage(Component.literal("§6Book Combine finished. Resuming script..."), true);
         }
 
-        if (com.ihanuat.mod.MacroStateManager.getCurrentState() == com.ihanuat.mod.MacroState.State.FARMING) {
+        if (shouldResumeMacro && com.ihanuat.mod.MacroStateManager.getCurrentState() == com.ihanuat.mod.MacroState.State.FARMING) {
             MacroWorkerThread.getInstance().submit("BookCombine-Finish", () -> {
                 if (MacroWorkerThread.shouldAbortTask(client, com.ihanuat.mod.MacroState.State.FARMING))
                     return;
