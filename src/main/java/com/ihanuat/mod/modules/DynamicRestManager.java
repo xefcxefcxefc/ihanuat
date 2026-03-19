@@ -14,7 +14,6 @@ import net.minecraft.network.chat.Component;
 
 /**
  * Implements the Dynamic Rest feature.
- *
  * Flow:
  * 1. Timer counts down while macro is running in any active state
  *    (FARMING, CLEANING, VISITING, SPRAYING, etc.) — no longer pauses on
@@ -69,10 +68,10 @@ public class DynamicRestManager {
             // Already scheduled and we want to persist
             return;
         }
-        long baseMs = MacroConfig.restScriptingTime * 60L * 1000L;
-        long offsetMs = MacroConfig.restScriptingTimeOffset * 60L * 1000L;
-        long randomOffsetMs = (offsetMs > 0) ? (long) (new Random().nextDouble() * offsetMs) : 0;
-        scheduledDurationMs = baseMs + randomOffsetMs;
+        long minMs = MacroConfig.restScriptingTimeMin * 60L * 1000L;
+        long maxMs = MacroConfig.restScriptingTimeMax * 60L * 1000L;
+        if (maxMs < minMs) maxMs = minMs;
+        scheduledDurationMs = minMs + (long)(new Random().nextDouble() * (maxMs - minMs));
         nextRestTriggerMs = System.currentTimeMillis() + scheduledDurationMs;
         restSequencePending = false;
         restSequenceStage = 0;
@@ -199,11 +198,10 @@ public class DynamicRestManager {
                 }
 
                 // Disconnect and schedule the reconnect after the break duration
-                long baseSecs = MacroConfig.restBreakTime * 60L;
-                long offsetSecs = MacroConfig.restBreakTimeOffset * 60L;
-                long randomOffsetSecs = (offsetSecs > 0) ? (long) (new Random().nextDouble() * offsetSecs)
-                        : 0;
-                long breakSeconds = baseSecs + randomOffsetSecs;
+                long minSecs = MacroConfig.restBreakTimeMin * 60L;
+                long maxSecs = MacroConfig.restBreakTimeMax * 60L;
+                if (maxSecs < minSecs) maxSecs = minSecs;
+                long breakSeconds = minSecs + (long)(new Random().nextDouble() * (maxSecs - minSecs));
 
                 if (client.player != null) {
                     client.player.displayClientMessage(

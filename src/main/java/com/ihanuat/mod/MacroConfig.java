@@ -148,13 +148,6 @@ public class MacroConfig {
     public static final int DEFAULT_HUD_STATE_VISITING_COLOR     = 0x55FFFF;
     public static final int DEFAULT_HUD_STATE_AUTOSELLING_COLOR  = 0xAA55FF;
     public static final int DEFAULT_HUD_STATE_SPRAYING_COLOR     = 0xFF55FF;
-    public static final int DEFAULT_HUD_DYNAMIC_REST_BG_COLOR    = 0x0A0A14;
-
-    // New min/max fields for dynamic rest (active-time based system)
-    public static final int DEFAULT_REST_SCRIPTING_TIME_MIN = 27;
-    public static final int DEFAULT_REST_SCRIPTING_TIME_MAX = 33;
-    public static final int DEFAULT_REST_BREAK_TIME_MIN = 18;
-    public static final int DEFAULT_REST_BREAK_TIME_MAX = 23;
 
     // ── Live fields ───────────────────────────────────────────────────────────
     public static int pestThreshold = DEFAULT_PEST_THRESHOLD;
@@ -200,13 +193,13 @@ public class MacroConfig {
     public static String restartScript = DEFAULT_RESTART_SCRIPT;
     public static int gardenWarpDelay = DEFAULT_GARDEN_WARP_DELAY;
     public static int restScriptingTime = DEFAULT_REST_SCRIPTING_TIME;
+    public static int restScriptingTimeMin = DEFAULT_REST_SCRIPTING_TIME - DEFAULT_REST_SCRIPTING_TIME_OFFSET;
+    public static int restScriptingTimeMax = DEFAULT_REST_SCRIPTING_TIME + DEFAULT_REST_SCRIPTING_TIME_OFFSET;
     public static int restScriptingTimeOffset = DEFAULT_REST_SCRIPTING_TIME_OFFSET;
     public static int restBreakTime = DEFAULT_REST_BREAK_TIME;
+    public static int restBreakTimeMin = DEFAULT_REST_BREAK_TIME - DEFAULT_REST_BREAK_TIME_OFFSET;
+    public static int restBreakTimeMax = DEFAULT_REST_BREAK_TIME + DEFAULT_REST_BREAK_TIME_OFFSET;
     public static int restBreakTimeOffset = DEFAULT_REST_BREAK_TIME_OFFSET;
-    public static int restScriptingTimeMin = DEFAULT_REST_SCRIPTING_TIME_MIN;
-    public static int restScriptingTimeMax = DEFAULT_REST_SCRIPTING_TIME_MAX;
-    public static int restBreakTimeMin = DEFAULT_REST_BREAK_TIME_MIN;
-    public static int restBreakTimeMax = DEFAULT_REST_BREAK_TIME_MAX;
     public static boolean enablePlotTpRewarp = DEFAULT_ENABLE_PLOT_TP_REWARP;
     public static boolean holdWUntilWall = DEFAULT_HOLD_W_UNTIL_WALL;
     public static String plotTpNumber = DEFAULT_PLOT_TP_NUMBER;
@@ -281,6 +274,8 @@ public class MacroConfig {
     public static int themeSliderFill  = 0xFF3A3A99;
     public static int themeButtonHover = 0xFF4444BB;
     public static TextStyle themeTextStyle = TextStyle.NONE;
+    public static final int DEFAULT_THEME_OUTLINE_SIZE = 1;
+    public static final int DEFAULT_THEME_SHADOW_OPACITY = 180;
     // outline pixel radius (1-3), shadow uses this as nothing extra needed
     public static int themeOutlineSize = 1;
     // shadow color opacity (0-255), 0 = fully transparent, 255 = fully opaque black
@@ -301,7 +296,7 @@ public class MacroConfig {
     public static int hudStateVisitingColor     = DEFAULT_HUD_STATE_VISITING_COLOR;
     public static int hudStateAutosellingColor  = DEFAULT_HUD_STATE_AUTOSELLING_COLOR;
     public static int hudStateSprayingColor     = DEFAULT_HUD_STATE_SPRAYING_COLOR;
-    public static int hudDynamicRestBgColor     = DEFAULT_HUD_DYNAMIC_REST_BG_COLOR;
+    public static int hudDynamicRestBgColor     = 0x000000;  // background color for the dynamic rest screen
 
     // ── Color helpers ─────────────────────────────────────────────────────────
 
@@ -407,7 +402,59 @@ public class MacroConfig {
 
     private static final File CONFIG_FILE =
             FabricLoader.getInstance().getConfigDir().resolve("ihanuat_config.json").toFile();
+    // written once on first launch, never overwritten — source of truth for "reset to default"
+    private static final File DEFAULTS_FILE =
+            FabricLoader.getInstance().getConfigDir().resolve("ihanuat_defaults.json").toFile();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    /** Writes the factory-default ConfigData to disk if the file does not yet exist. */
+    public static void saveDefaultsIfAbsent() {
+        if (DEFAULTS_FILE.exists()) return;
+        try (FileWriter w = new FileWriter(DEFAULTS_FILE)) {
+            GSON.toJson(new ConfigData(), w); // ConfigData field initialisers ARE the defaults
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    /**
+     * Returns the stored default value for a named field from ihanuat_defaults.json.
+     * Falls back to an empty string / "0" if the file is missing or the field is absent.
+     */
+    public static String getDefaultString(String field) {
+        return readDefaultField(field, "");
+    }
+    public static String getDefaultInt(String field) {
+        return readDefaultField(field, "0");
+    }
+    public static String getDefaultDouble(String field) {
+        return readDefaultField(field, "0");
+    }
+    public static String getDefaultList(String field) {
+        // returns newline-joined list, or empty string
+        try {
+            if (!DEFAULTS_FILE.exists()) return "";
+            try (java.io.FileReader r = new java.io.FileReader(DEFAULTS_FILE)) {
+                com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseReader(r).getAsJsonObject();
+                if (!obj.has(field)) return "";
+                com.google.gson.JsonElement el = obj.get(field);
+                if (!el.isJsonArray()) return "";
+                java.util.List<String> lines = new java.util.ArrayList<>();
+                for (com.google.gson.JsonElement item : el.getAsJsonArray())
+                    lines.add(item.getAsString());
+                return String.join("\n", lines);
+            }
+        } catch (Exception e) { return ""; }
+    }
+
+    private static String readDefaultField(String field, String fallback) {
+        try {
+            if (!DEFAULTS_FILE.exists()) return fallback;
+            try (java.io.FileReader r = new java.io.FileReader(DEFAULTS_FILE)) {
+                com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseReader(r).getAsJsonObject();
+                if (!obj.has(field)) return fallback;
+                return obj.get(field).getAsString();
+            }
+        } catch (Exception e) { return fallback; }
+    }
 
     public static void save() {
         ConfigData d = new ConfigData();
@@ -453,13 +500,13 @@ public class MacroConfig {
         d.restartScript = restartScript;
         d.gardenWarpDelay = gardenWarpDelay;
         d.restScriptingTime = restScriptingTime;
-        d.restScriptingTimeOffset = restScriptingTimeOffset;
-        d.restBreakTime = restBreakTime;
-        d.restBreakTimeOffset = restBreakTimeOffset;
         d.restScriptingTimeMin = restScriptingTimeMin;
         d.restScriptingTimeMax = restScriptingTimeMax;
+        d.restScriptingTimeOffset = restScriptingTimeOffset;
+        d.restBreakTime = restBreakTime;
         d.restBreakTimeMin = restBreakTimeMin;
         d.restBreakTimeMax = restBreakTimeMax;
+        d.restBreakTimeOffset = restBreakTimeOffset;
         d.enablePlotTpRewarp = enablePlotTpRewarp;
         d.holdWUntilWall = holdWUntilWall;
         d.plotTpNumber = plotTpNumber;
@@ -529,12 +576,13 @@ public class MacroConfig {
         d.hudStateVisitingColorHex    = toHexString(hudStateVisitingColor);
         d.hudStateAutosellingColorHex = toHexString(hudStateAutosellingColor);
         d.hudStateSprayingColorHex    = toHexString(hudStateSprayingColor);
-        d.hudDynamicRestBgColorHex    = toHexString(hudDynamicRestBgColor);
+        d.hudDynamicRestBgColor       = hudDynamicRestBgColor;
         try (FileWriter w = new FileWriter(CONFIG_FILE)) { GSON.toJson(d, w); }
         catch (Exception e) { e.printStackTrace(); }
     }
 
     public static void load() {
+        saveDefaultsIfAbsent(); // write defaults file once on first launch
         if (!CONFIG_FILE.exists()) { save(); return; }
         boolean shouldRewriteConfig = false;
         try (FileReader r = new FileReader(CONFIG_FILE)) {
@@ -582,13 +630,13 @@ public class MacroConfig {
             if (d.restartScript != null && !d.restartScript.isBlank()) restartScript = d.restartScript;
             gardenWarpDelay = d.gardenWarpDelay;
             restScriptingTime = d.restScriptingTime;
+            if (d.restScriptingTimeMin != 0) restScriptingTimeMin = d.restScriptingTimeMin;
+            if (d.restScriptingTimeMax != 0) restScriptingTimeMax = d.restScriptingTimeMax;
             restScriptingTimeOffset = d.restScriptingTimeOffset;
             restBreakTime = d.restBreakTime;
+            if (d.restBreakTimeMin != 0) restBreakTimeMin = d.restBreakTimeMin;
+            if (d.restBreakTimeMax != 0) restBreakTimeMax = d.restBreakTimeMax;
             restBreakTimeOffset = d.restBreakTimeOffset;
-            if (d.restScriptingTimeMin > 0) restScriptingTimeMin = d.restScriptingTimeMin;
-            if (d.restScriptingTimeMax > 0) restScriptingTimeMax = Math.max(restScriptingTimeMin, d.restScriptingTimeMax);
-            if (d.restBreakTimeMin > 0) restBreakTimeMin = d.restBreakTimeMin;
-            if (d.restBreakTimeMax > 0) restBreakTimeMax = Math.max(restBreakTimeMin, d.restBreakTimeMax);
             enablePlotTpRewarp = d.enablePlotTpRewarp;
             holdWUntilWall = d.holdWUntilWall;
             if (d.plotTpNumber != null) plotTpNumber = d.plotTpNumber;
@@ -662,7 +710,7 @@ public class MacroConfig {
             hudStateVisitingColor    = parseHexColor(d.hudStateVisitingColorHex, DEFAULT_HUD_STATE_VISITING_COLOR);
             hudStateAutosellingColor = parseHexColor(d.hudStateAutosellingColorHex, DEFAULT_HUD_STATE_AUTOSELLING_COLOR);
             hudStateSprayingColor    = parseHexColor(d.hudStateSprayingColorHex, DEFAULT_HUD_STATE_SPRAYING_COLOR);
-            hudDynamicRestBgColor    = parseHexColor(d.hudDynamicRestBgColorHex, DEFAULT_HUD_DYNAMIC_REST_BG_COLOR);
+            if (d.hudDynamicRestBgColor != 0) hudDynamicRestBgColor = d.hudDynamicRestBgColor;
         } catch (Exception e) { e.printStackTrace(); }
         if (shouldRewriteConfig) save();
     }
@@ -763,13 +811,13 @@ public class MacroConfig {
         String restartScript = DEFAULT_RESTART_SCRIPT;
         int gardenWarpDelay = DEFAULT_GARDEN_WARP_DELAY;
         int restScriptingTime = DEFAULT_REST_SCRIPTING_TIME;
+        int restScriptingTimeMin = 0;
+        int restScriptingTimeMax = 0;
         int restScriptingTimeOffset = DEFAULT_REST_SCRIPTING_TIME_OFFSET;
         int restBreakTime = DEFAULT_REST_BREAK_TIME;
+        int restBreakTimeMin = 0;
+        int restBreakTimeMax = 0;
         int restBreakTimeOffset = DEFAULT_REST_BREAK_TIME_OFFSET;
-        int restScriptingTimeMin = DEFAULT_REST_SCRIPTING_TIME_MIN;
-        int restScriptingTimeMax = DEFAULT_REST_SCRIPTING_TIME_MAX;
-        int restBreakTimeMin = DEFAULT_REST_BREAK_TIME_MIN;
-        int restBreakTimeMax = DEFAULT_REST_BREAK_TIME_MAX;
         boolean enablePlotTpRewarp = DEFAULT_ENABLE_PLOT_TP_REWARP;
         boolean holdWUntilWall = DEFAULT_HOLD_W_UNTIL_WALL;
         String plotTpNumber = DEFAULT_PLOT_TP_NUMBER;
@@ -841,6 +889,6 @@ public class MacroConfig {
         String hudStateVisitingColorHex    = toHexString(DEFAULT_HUD_STATE_VISITING_COLOR);
         String hudStateAutosellingColorHex = toHexString(DEFAULT_HUD_STATE_AUTOSELLING_COLOR);
         String hudStateSprayingColorHex    = toHexString(DEFAULT_HUD_STATE_SPRAYING_COLOR);
-        String hudDynamicRestBgColorHex    = toHexString(DEFAULT_HUD_DYNAMIC_REST_BG_COLOR);
+        int hudDynamicRestBgColor = 0;
     }
 }
