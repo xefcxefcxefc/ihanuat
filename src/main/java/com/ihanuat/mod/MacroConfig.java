@@ -148,6 +148,13 @@ public class MacroConfig {
     public static final int DEFAULT_HUD_STATE_VISITING_COLOR     = 0x55FFFF;
     public static final int DEFAULT_HUD_STATE_AUTOSELLING_COLOR  = 0xAA55FF;
     public static final int DEFAULT_HUD_STATE_SPRAYING_COLOR     = 0xFF55FF;
+    public static final int DEFAULT_HUD_DYNAMIC_REST_BG_COLOR    = 0x0A0A14;
+
+    // New min/max fields for dynamic rest (active-time based system)
+    public static final int DEFAULT_REST_SCRIPTING_TIME_MIN = 27;
+    public static final int DEFAULT_REST_SCRIPTING_TIME_MAX = 33;
+    public static final int DEFAULT_REST_BREAK_TIME_MIN = 18;
+    public static final int DEFAULT_REST_BREAK_TIME_MAX = 23;
 
     // ── Live fields ───────────────────────────────────────────────────────────
     public static int pestThreshold = DEFAULT_PEST_THRESHOLD;
@@ -196,6 +203,10 @@ public class MacroConfig {
     public static int restScriptingTimeOffset = DEFAULT_REST_SCRIPTING_TIME_OFFSET;
     public static int restBreakTime = DEFAULT_REST_BREAK_TIME;
     public static int restBreakTimeOffset = DEFAULT_REST_BREAK_TIME_OFFSET;
+    public static int restScriptingTimeMin = DEFAULT_REST_SCRIPTING_TIME_MIN;
+    public static int restScriptingTimeMax = DEFAULT_REST_SCRIPTING_TIME_MAX;
+    public static int restBreakTimeMin = DEFAULT_REST_BREAK_TIME_MIN;
+    public static int restBreakTimeMax = DEFAULT_REST_BREAK_TIME_MAX;
     public static boolean enablePlotTpRewarp = DEFAULT_ENABLE_PLOT_TP_REWARP;
     public static boolean holdWUntilWall = DEFAULT_HOLD_W_UNTIL_WALL;
     public static String plotTpNumber = DEFAULT_PLOT_TP_NUMBER;
@@ -290,6 +301,7 @@ public class MacroConfig {
     public static int hudStateVisitingColor     = DEFAULT_HUD_STATE_VISITING_COLOR;
     public static int hudStateAutosellingColor  = DEFAULT_HUD_STATE_AUTOSELLING_COLOR;
     public static int hudStateSprayingColor     = DEFAULT_HUD_STATE_SPRAYING_COLOR;
+    public static int hudDynamicRestBgColor     = DEFAULT_HUD_DYNAMIC_REST_BG_COLOR;
 
     // ── Color helpers ─────────────────────────────────────────────────────────
 
@@ -444,6 +456,10 @@ public class MacroConfig {
         d.restScriptingTimeOffset = restScriptingTimeOffset;
         d.restBreakTime = restBreakTime;
         d.restBreakTimeOffset = restBreakTimeOffset;
+        d.restScriptingTimeMin = restScriptingTimeMin;
+        d.restScriptingTimeMax = restScriptingTimeMax;
+        d.restBreakTimeMin = restBreakTimeMin;
+        d.restBreakTimeMax = restBreakTimeMax;
         d.enablePlotTpRewarp = enablePlotTpRewarp;
         d.holdWUntilWall = holdWUntilWall;
         d.plotTpNumber = plotTpNumber;
@@ -513,6 +529,7 @@ public class MacroConfig {
         d.hudStateVisitingColorHex    = toHexString(hudStateVisitingColor);
         d.hudStateAutosellingColorHex = toHexString(hudStateAutosellingColor);
         d.hudStateSprayingColorHex    = toHexString(hudStateSprayingColor);
+        d.hudDynamicRestBgColorHex    = toHexString(hudDynamicRestBgColor);
         try (FileWriter w = new FileWriter(CONFIG_FILE)) { GSON.toJson(d, w); }
         catch (Exception e) { e.printStackTrace(); }
     }
@@ -568,6 +585,10 @@ public class MacroConfig {
             restScriptingTimeOffset = d.restScriptingTimeOffset;
             restBreakTime = d.restBreakTime;
             restBreakTimeOffset = d.restBreakTimeOffset;
+            if (d.restScriptingTimeMin > 0) restScriptingTimeMin = d.restScriptingTimeMin;
+            if (d.restScriptingTimeMax > 0) restScriptingTimeMax = Math.max(restScriptingTimeMin, d.restScriptingTimeMax);
+            if (d.restBreakTimeMin > 0) restBreakTimeMin = d.restBreakTimeMin;
+            if (d.restBreakTimeMax > 0) restBreakTimeMax = Math.max(restBreakTimeMin, d.restBreakTimeMax);
             enablePlotTpRewarp = d.enablePlotTpRewarp;
             holdWUntilWall = d.holdWUntilWall;
             if (d.plotTpNumber != null) plotTpNumber = d.plotTpNumber;
@@ -641,6 +662,7 @@ public class MacroConfig {
             hudStateVisitingColor    = parseHexColor(d.hudStateVisitingColorHex, DEFAULT_HUD_STATE_VISITING_COLOR);
             hudStateAutosellingColor = parseHexColor(d.hudStateAutosellingColorHex, DEFAULT_HUD_STATE_AUTOSELLING_COLOR);
             hudStateSprayingColor    = parseHexColor(d.hudStateSprayingColorHex, DEFAULT_HUD_STATE_SPRAYING_COLOR);
+            hudDynamicRestBgColor    = parseHexColor(d.hudDynamicRestBgColorHex, DEFAULT_HUD_DYNAMIC_REST_BG_COLOR);
         } catch (Exception e) { e.printStackTrace(); }
         if (shouldRewriteConfig) save();
     }
@@ -744,6 +766,10 @@ public class MacroConfig {
         int restScriptingTimeOffset = DEFAULT_REST_SCRIPTING_TIME_OFFSET;
         int restBreakTime = DEFAULT_REST_BREAK_TIME;
         int restBreakTimeOffset = DEFAULT_REST_BREAK_TIME_OFFSET;
+        int restScriptingTimeMin = DEFAULT_REST_SCRIPTING_TIME_MIN;
+        int restScriptingTimeMax = DEFAULT_REST_SCRIPTING_TIME_MAX;
+        int restBreakTimeMin = DEFAULT_REST_BREAK_TIME_MIN;
+        int restBreakTimeMax = DEFAULT_REST_BREAK_TIME_MAX;
         boolean enablePlotTpRewarp = DEFAULT_ENABLE_PLOT_TP_REWARP;
         boolean holdWUntilWall = DEFAULT_HOLD_W_UNTIL_WALL;
         String plotTpNumber = DEFAULT_PLOT_TP_NUMBER;
@@ -815,5 +841,6 @@ public class MacroConfig {
         String hudStateVisitingColorHex    = toHexString(DEFAULT_HUD_STATE_VISITING_COLOR);
         String hudStateAutosellingColorHex = toHexString(DEFAULT_HUD_STATE_AUTOSELLING_COLOR);
         String hudStateSprayingColorHex    = toHexString(DEFAULT_HUD_STATE_SPRAYING_COLOR);
+        String hudDynamicRestBgColorHex    = toHexString(DEFAULT_HUD_DYNAMIC_REST_BG_COLOR);
     }
 }

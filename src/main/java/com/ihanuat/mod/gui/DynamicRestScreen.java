@@ -37,8 +37,8 @@ public class DynamicRestScreen extends Screen {
 
     @Override
     public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // Dark background fill
-        graphics.fill(0, 0, this.width, this.height, 0xFF0A0A14);
+        // Dark background fill (user-configurable via HUD Colors tab)
+        graphics.fill(0, 0, this.width, this.height, 0xFF000000 | MacroConfig.hudDynamicRestBgColor);
 
         super.render(graphics, mouseX, mouseY, partialTick);
 

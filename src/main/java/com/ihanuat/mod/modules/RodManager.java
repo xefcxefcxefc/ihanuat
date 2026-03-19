@@ -84,7 +84,7 @@ public class RodManager {
 
             // 3. Delay before click (configurable)
             if (MacroConfig.rodSwapDelay > 0) {
-                Thread.sleep(MacroConfig.rodSwapDelay);
+                Thread.sleep(MacroConfig.getRandomizedDelay(MacroConfig.rodSwapDelay));
             }
 
             // 4. Perform single right click on game thread

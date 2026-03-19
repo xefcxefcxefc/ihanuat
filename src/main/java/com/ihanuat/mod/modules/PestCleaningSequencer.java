@@ -129,7 +129,8 @@ public class PestCleaningSequencer {
 
                 // AOTV path: use the user-configured wardrobeAotvDelay.
                 // Non-AOTV path: use the user-configured wardrobePostSwapDelay.
-                int postSwapWait = aotvPath ? MacroConfig.wardrobeAotvDelay : MacroConfig.wardrobePostSwapDelay;
+                int postSwapWait = aotvPath ? MacroConfig.getRandomizedDelay(MacroConfig.wardrobeAotvDelay) 
+                                            : MacroConfig.getRandomizedDelay(MacroConfig.wardrobePostSwapDelay);
                 MacroWorkerThread.sleep(postSwapWait);
 
                 if (MacroWorkerThread.shouldAbortTask(client))

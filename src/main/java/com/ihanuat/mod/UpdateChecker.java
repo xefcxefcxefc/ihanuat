@@ -86,7 +86,8 @@ public final class UpdateChecker {
         String normalizedLatest  = normalizeTag(latestTag);
         String normalizedCurrent = normalizeTag(currentVersion);
 
-        if (normalizedLatest.equals(normalizedCurrent)) {
+        // only notify if latest is actually newer, not just different
+        if (!isNewer(normalizedLatest, normalizedCurrent)) {
             Ihanuat.LOGGER.info("[ihanuat] UpdateChecker: up to date ({})", currentVersion);
             return;
         }
@@ -123,5 +124,32 @@ public final class UpdateChecker {
     private static String normalizeTag(String tag) {
         if (tag == null) return "";
         return tag.startsWith("v") || tag.startsWith("V") ? tag.substring(1) : tag;
+    }
+
+    // returns true if candidate is strictly newer than current using semver comparison
+    // e.g. isNewer("3.0.2", "3.0.1") = true, isNewer("3.0.1", "3.0.1") = false
+    static boolean isNewer(String candidate, String current) {
+        int[] c = parseSemver(candidate);
+        int[] v = parseSemver(current);
+        for (int i = 0; i < Math.max(c.length, v.length); i++) {
+            int a = i < c.length ? c[i] : 0;
+            int b = i < v.length ? v[i] : 0;
+            if (a > b) return true;
+            if (a < b) return false;
+        }
+        return false;
+    }
+
+    private static int[] parseSemver(String version) {
+        if (version == null || version.isEmpty()) return new int[]{0};
+        // strip any pre-release suffix like -beta.1
+        String clean = version.split("-")[0].split("\\+")[0];
+        String[] parts = clean.split("\\.");
+        int[] nums = new int[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            try { nums[i] = Integer.parseInt(parts[i]); }
+            catch (NumberFormatException e) { nums[i] = 0; }
+        }
+        return nums;
     }
 }
