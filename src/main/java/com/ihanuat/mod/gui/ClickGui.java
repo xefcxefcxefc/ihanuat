@@ -627,7 +627,7 @@ public class ClickGui extends Screen {
                     save();
                 },
                 "Pet Name, Max Level (100/200), Level 1 Price,",
-                "Max Level Price, Rarity" + String.join(", ", java.util.Arrays.stream(MacroConfig.PetRarity.values()).map(Enum::name).toList())));
+                "Max Level Price, Rarity" ));
         p.add(button("Reset Session", () -> {
             MacroStateManager.resetSession();
             notifyMsg("Session reset!");
