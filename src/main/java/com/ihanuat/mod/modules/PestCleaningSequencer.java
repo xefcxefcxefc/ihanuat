@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 public class PestCleaningSequencer {
+    private static final long SETSPAWN_TO_WARDROBE_COOLDOWN_MS = 1000L;
 
     public static void startCleaningSequence(Minecraft client, String plot, String currentInfestedPlot,
             int currentPestSessionId) {
@@ -42,6 +43,13 @@ public class PestCleaningSequencer {
                 if (MacroWorkerThread.shouldAbortTask(client))
                     return;
                 if (sessionId != PestManager.currentPestSessionId)
+                    return;
+                if (MacroConfig.autoWardrobePest) {
+                    ClientUtils.sendDebugMessage(client,
+                            "Cooling down 1s after /setspawn before any wardrobe interaction.");
+                    MacroWorkerThread.sleep(SETSPAWN_TO_WARDROBE_COOLDOWN_MS);
+                }
+                if (MacroWorkerThread.shouldAbortTask(client))
                     return;
 
                 boolean isSamePlot = currentInfestedPlot != null && currentInfestedPlot.equals(currentPlot);
