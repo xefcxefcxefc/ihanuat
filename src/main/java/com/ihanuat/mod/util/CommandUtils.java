@@ -2,12 +2,38 @@ package com.ihanuat.mod.util;
 
 import net.minecraft.client.Minecraft;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 
 public class CommandUtils {
-    private static final Queue<String> chatMessageQueue = new LinkedList<>();
+    private static final Deque<QueuedChatMessage> chatMessageQueue = new ArrayDeque<>();
     private static final long MESSAGE_TIMEOUT_MS = 10000; // 10 second timeout
+    private static final int MAX_QUEUED_MESSAGES = 256;
+
+    private static final class QueuedChatMessage {
+        private final String message;
+        private final long receivedAtMs;
+
+        private QueuedChatMessage(String message, long receivedAtMs) {
+            this.message = message;
+            this.receivedAtMs = receivedAtMs;
+        }
+    }
+
+    private static void trimExpiredMessagesLocked(long now) {
+        while (!chatMessageQueue.isEmpty()) {
+            QueuedChatMessage oldest = chatMessageQueue.peekFirst();
+            if (oldest == null) {
+                break;
+            }
+            if (now - oldest.receivedAtMs <= MESSAGE_TIMEOUT_MS
+                    && chatMessageQueue.size() <= MAX_QUEUED_MESSAGES) {
+                break;
+            }
+            chatMessageQueue.removeFirst();
+        }
+    }
 
     /**
      * Register a chat message to the queue.
@@ -15,7 +41,10 @@ public class CommandUtils {
      */
     public static void onChatMessage(String message) {
         synchronized (chatMessageQueue) {
-            chatMessageQueue.add(message);
+            long now = System.currentTimeMillis();
+            trimExpiredMessagesLocked(now);
+            chatMessageQueue.addLast(new QueuedChatMessage(message, now));
+            trimExpiredMessagesLocked(now);
             chatMessageQueue.notifyAll();
         }
     }
@@ -33,11 +62,13 @@ public class CommandUtils {
 
         synchronized (chatMessageQueue) {
             while (System.currentTimeMillis() - startTime < MESSAGE_TIMEOUT_MS) {
+                trimExpiredMessagesLocked(System.currentTimeMillis());
+
                 // Check existing messages
-                java.util.Iterator<String> it = chatMessageQueue.iterator();
+                Iterator<QueuedChatMessage> it = chatMessageQueue.iterator();
                 while (it.hasNext()) {
-                    String msg = it.next();
-                    if (msg.contains(messageSubstring)) {
+                    QueuedChatMessage msg = it.next();
+                    if (msg.message.contains(messageSubstring)) {
                         it.remove(); // Remove the matched message
                         return true;
                     }
@@ -68,10 +99,11 @@ public class CommandUtils {
      */
     public static boolean hasReceivedMessage(String messageSubstring) {
         synchronized (chatMessageQueue) {
-            java.util.Iterator<String> it = chatMessageQueue.iterator();
+            trimExpiredMessagesLocked(System.currentTimeMillis());
+            Iterator<QueuedChatMessage> it = chatMessageQueue.iterator();
             while (it.hasNext()) {
-                String msg = it.next();
-                if (msg.contains(messageSubstring)) {
+                QueuedChatMessage msg = it.next();
+                if (msg.message.contains(messageSubstring)) {
                     it.remove(); // Remove the matched message
                     return true;
                 }

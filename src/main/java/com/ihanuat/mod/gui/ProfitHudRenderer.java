@@ -118,6 +118,7 @@ public class ProfitHudRenderer {
     // ── Rendering ────────────────────────────────────────────────────────────
     private static void render(GuiGraphics g, Minecraft client, String mode, boolean editMode) {
         if (client.player == null) return;
+        ProfitManager.ProfitHudSnapshot snapshot = ProfitManager.getHudSnapshot(mode);
 
         // Resolve colors from config
         int bgColor    = MacroConfig.toArgb(MacroConfig.hudBgColor);
@@ -130,7 +131,7 @@ public class ProfitHudRenderer {
         if ("lifetime".equals(mode)) { scale = MacroConfig.lifetimeHudScale; x = MacroConfig.lifetimeHudX; y = MacroConfig.lifetimeHudY; }
         else                         { scale = MacroConfig.sessionProfitHudScale; x = MacroConfig.sessionProfitHudX; y = MacroConfig.sessionProfitHudY; }
 
-        int panelH = panelH(mode);
+        int panelH = panelH(mode, snapshot);
         g.pose().pushMatrix();
         g.pose().translate(x, y);
         g.pose().scale(scale, scale);
@@ -152,7 +153,7 @@ public class ProfitHudRenderer {
         rowY += 4;
 
         if (MacroConfig.compactProfitCalculator) {
-            Map<String, Long> drops = ProfitManager.getCompactDrops(mode);
+            Map<String, Long> drops = snapshot.compactDrops();
             for (Map.Entry<String, Long> e : drops.entrySet()) {
                 if (e.getValue() != 0) {
                     int vc = e.getKey().equals("Costs") ? 0xFFFF5555 : 0xFFFFFF55;
@@ -161,7 +162,7 @@ public class ProfitHudRenderer {
                 }
             }
         } else {
-            Map<String, Long> drops = ProfitManager.getActiveDrops(mode);
+            Map<String, Long> drops = snapshot.activeDrops();
             for (Map.Entry<String, Long> e : drops.entrySet()) {
                 String item = e.getKey(); long count = e.getValue();
                 double price = ProfitManager.getItemPrice(item);
@@ -184,7 +185,7 @@ public class ProfitHudRenderer {
         if (rowY > PADDING_V + FONT_H + 3 + 4) {
             g.fill(PADDING_H, rowY + 1, PANEL_W - PADDING_H, rowY + 2, sepColor);
             rowY += 4;
-            long total = ProfitManager.getTotalProfit(mode);
+            long total = snapshot.totalProfit();
             drawRow(g, client, rowY, "Total Profit", formatProfit(total), 0xFFFFAA00, labelColor);
             rowY += ROW_HEIGHT;
             if ("session".equals(mode)) {
@@ -198,10 +199,14 @@ public class ProfitHudRenderer {
     }
 
     private static int panelH(String mode) {
+        return panelH(mode, ProfitManager.getHudSnapshot(mode));
+    }
+
+    private static int panelH(String mode, ProfitManager.ProfitHudSnapshot snapshot) {
         int baseH = PADDING_V + FONT_H + 3 + 4;
         int itemCount = MacroConfig.compactProfitCalculator
-                ? (int) ProfitManager.getCompactDrops(mode).values().stream().filter(v -> v != 0).count()
-                : ProfitManager.getActiveDrops(mode).size();
+                ? snapshot.compactNonZeroCount()
+                : snapshot.activeItemCount();
         if (itemCount > 0) {
             int extra = "session".equals(mode) ? 1 : 0;
             baseH += itemCount * ROW_HEIGHT + 4 + ROW_HEIGHT + extra * ROW_HEIGHT + PADDING_V;
