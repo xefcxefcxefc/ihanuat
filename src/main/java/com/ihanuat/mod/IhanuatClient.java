@@ -67,13 +67,18 @@ public class IhanuatClient implements ClientModInitializer {
     private static boolean isPickingUpStash = false;
     private static boolean hasPendingStash = false;
     private static boolean lastScreenWasBoosterCookie = false;
-    /** Called by BoosterCookieManager when autosell completes, to arm the stash pickup. */
+    /**
+     * Previously the only arm path for stash pickup; now a no-op in practice.
+     * Stash pickup is armed directly from the chat handler when "stashed" is detected,
+     * so hasPendingStash will always be false by the time autosell completes.
+     * Kept to avoid breaking BoosterCookieManager's call site.
+     */
     public static void armStashPickupAfterAutosell() {
         if (!MacroConfig.autoStashManager) return;
-        if (!hasPendingStash) return;
+        if (!hasPendingStash) return; // already armed from chat handler; nothing to do
         hasPendingStash = false;
         isPickingUpStash = true;
-        lastStashPickupTime = 0; // fire first command immediately
+        lastStashPickupTime = 0;
         refreshStashPickupDelay();
         if (MacroConfig.showDebug) {
             ClientUtils.sendDebugMessage(Minecraft.getInstance(),
@@ -458,10 +463,18 @@ public class IhanuatClient implements ClientModInitializer {
                     }
                 }
 
-                if (lowerText.contains("stashed away!")) {
-                    hasPendingStash = true;
-                    // Pickup is deliberately deferred — it arms after autosell completes,
-                    // not immediately, to avoid interfering with ongoing macro sequences.
+                if (lowerText.contains("stashed")) {
+                    // Arm stash pickup directly — no longer gated on autosell completing.
+                    // The old flow relied on armStashPickupAfterAutosell() being called from
+                    // BoosterCookieManager, which only runs if auto-booster-cookie is enabled
+                    // and the menu is open. Without that path, hasPendingStash would sit true
+                    // forever and /pickupstash would never fire.
+                    if (MacroConfig.autoStashManager) {
+                        hasPendingStash = false;
+                        isPickingUpStash = true;
+                        lastStashPickupTime = System.currentTimeMillis() + 2000; // 2s grace before first attempt
+                        refreshStashPickupDelay();
+                    }
                 }
 
                 if (lowerText.contains("your stash isn't holding any items or materials!")) {
