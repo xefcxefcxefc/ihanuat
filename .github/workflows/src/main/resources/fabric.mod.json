@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "ihanuat",
+  "version": "${version}",
+  "name": "Ihanuat",
+  "description": "Advanced Garden Macro v2",
+  "authors": [
+    "jetzalel"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/fabricmc/fabric-example-mod"
+  },
+  "license": "MIT",
+  "icon": "assets/ihanuat/icon.png",
+  "environment": "*",
+  "mixins": [
+    "ihanuat.mixins.json"
+  ],
+  "entrypoints": {
+    "main": [
+      "com.ihanuat.mod.Ihanuat"
+    ],
+    "client": [
+      "com.ihanuat.mod.IhanuatClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
