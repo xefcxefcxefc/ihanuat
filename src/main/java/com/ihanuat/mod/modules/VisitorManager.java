@@ -50,21 +50,10 @@ public class VisitorManager {
         }
 
         try {
-            if (client.getConnection() != null) {
-                java.util.Collection<net.minecraft.client.multiplayer.PlayerInfo> players = client.getConnection()
-                        .getListedOnlinePlayers();
-                for (net.minecraft.client.multiplayer.PlayerInfo info : players) {
-                    String name = "";
-                    if (info.getTabListDisplayName() != null) {
-                        name = info.getTabListDisplayName().getString();
-                    } else if (info.getProfile() != null) {
-                        name = String.valueOf(info.getProfile());
-                    }
-                    String clean = name.replaceAll("(?i)\u00A7[0-9a-fk-or]", "").trim();
-                    Matcher m = VISITORS_PATTERN.matcher(clean);
-                    if (m.find()) {
-                        return Integer.parseInt(m.group(1));
-                    }
+            for (String line : com.ihanuat.mod.util.TabListCache.getTabLines(client)) {
+                Matcher m = VISITORS_PATTERN.matcher(line);
+                if (m.find()) {
+                    return Integer.parseInt(m.group(1));
                 }
             }
         } catch (Exception e) {

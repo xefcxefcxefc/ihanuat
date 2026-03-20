@@ -206,20 +206,21 @@ public class IhanuatClient implements ClientModInitializer {
 
                 if (client.screen instanceof TitleScreen || client.screen instanceof DisconnectedScreen
                         || client.screen instanceof DynamicRestScreen) {
-                    long reconnectAt = RestStateManager.loadReconnectTime();
+                    RestStateManager.RestState restState = RestStateManager.getState();
+                    long reconnectAt = restState.reconnectAt();
                     if (reconnectAt > 0) {
                         long now = java.time.Instant.now().getEpochSecond();
                         long remaining = reconnectAt - now;
                         if (remaining <= 0) {
                             if (!ReconnectScheduler.isPending()) {
-                                ReconnectScheduler.scheduleReconnect(10, RestStateManager.shouldResume());
+                                ReconnectScheduler.scheduleReconnect(10, restState.shouldResume());
                                 if (client.screen instanceof DisconnectedScreen) {
                                     client.execute(() -> client.setScreen(new DynamicRestScreen(
                                             java.time.Instant.now().getEpochSecond() * 1000 + 10000, 10000)));
                                 }
                             }
                         } else if (!ReconnectScheduler.isPending()) {
-                            ReconnectScheduler.scheduleReconnect(remaining, RestStateManager.shouldResume());
+                            ReconnectScheduler.scheduleReconnect(remaining, restState.shouldResume());
                             if (client.screen instanceof DisconnectedScreen) {
                                 client.execute(() -> client
                                         .setScreen(new DynamicRestScreen(reconnectAt * 1000, remaining * 1000)));
@@ -228,11 +229,12 @@ public class IhanuatClient implements ClientModInitializer {
                     }
                 }
             } else if (!hasCheckedPersistenceOnJoin) {
-                long reconnectAt = RestStateManager.loadReconnectTime();
+                RestStateManager.RestState restState = RestStateManager.getState();
+                long reconnectAt = restState.reconnectAt();
                 if (reconnectAt != 0) {
                     // Rejoin can complete a few seconds after the scheduled reconnect time,
                     // so the saved resume flag is the reliable signal here.
-                    if (RestStateManager.shouldResume() && MacroConfig.autoResumeAfterDynamicRest) {
+                    if (restState.shouldResume() && MacroConfig.autoResumeAfterDynamicRest) {
                         client.player.displayClientMessage(
                                 Component.literal(
                                         "\u00A76[Ihanuat] Session persistence detected! Initializing recovery..."),

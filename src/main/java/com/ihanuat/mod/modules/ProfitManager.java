@@ -23,13 +23,12 @@ public class ProfitManager {
     private static final Map<String, Double> bazaarPrices = new LinkedHashMap<>();
     private static final Map<String, Long> petLvl1Prices = new java.util.HashMap<>();
     private static final Map<String, Long> petMaxLvlPrices = new java.util.HashMap<>();
+    private static final java.util.Map<String, ProfitHudSnapshot> profitHudSnapshots = new java.util.HashMap<>();
+    private static final java.util.Set<String> dirtyHudModes = new java.util.HashSet<>(
+            java.util.Arrays.asList("session", "daily", "lifetime"));
     private static long lastCultivatingValue = -1;
     private static String currentFarmedCrop = "Wheat";
     private static long lastBazaarFetchTime = 0;
-
-    private static final Map<String, Map<String, Long>> hudCache = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Map<String, Long> hudCacheTime = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final long HUD_CACHE_VALIDITY_MS = 250; // Cache HUD data for 250ms
     private static long lastPurseBalance = -1;
     private static String lastDailyResetDate = getCurrentDateString();
 
@@ -279,6 +278,137 @@ public class ProfitManager {
     private static long lastBazaarSprayBuyTime = 0;
     private static boolean isTrackingVisitorRewards = false;
     private static boolean copperSeenInRewards = false;
+
+    public static final class ProfitHudSnapshot {
+        private final Map<String, Long> activeDrops;
+        private final Map<String, Long> compactDrops;
+        private final long totalProfit;
+        private final int activeItemCount;
+        private final int compactNonZeroCount;
+
+        private ProfitHudSnapshot(Map<String, Long> activeDrops, Map<String, Long> compactDrops, long totalProfit) {
+            this.activeDrops = java.util.Collections.unmodifiableMap(activeDrops);
+            this.compactDrops = java.util.Collections.unmodifiableMap(compactDrops);
+            this.totalProfit = totalProfit;
+            this.activeItemCount = activeDrops.size();
+            this.compactNonZeroCount = (int) compactDrops.values().stream().filter(value -> value != 0).count();
+        }
+
+        public Map<String, Long> activeDrops() {
+            return activeDrops;
+        }
+
+        public Map<String, Long> compactDrops() {
+            return compactDrops;
+        }
+
+        public long totalProfit() {
+            return totalProfit;
+        }
+
+        public int activeItemCount() {
+            return activeItemCount;
+        }
+
+        public int compactNonZeroCount() {
+            return compactNonZeroCount;
+        }
+    }
+
+    private static void markHudDirty(String... modes) {
+        synchronized (profitHudSnapshots) {
+            for (String mode : modes) {
+                dirtyHudModes.add(mode);
+            }
+        }
+    }
+
+    private static Map<String, Long> getCountsForMode(String mode) {
+        if ("daily".equals(mode)) {
+            return dailyCounts;
+        }
+        if ("lifetime".equals(mode)) {
+            return lifetimeCounts;
+        }
+        return sessionCounts;
+    }
+
+    private static Map<String, Long> buildCompactDrops(Map<String, Long> targetCounts) {
+        Map<String, Long> compact = new LinkedHashMap<>();
+        compact.put("Crops", 0L);
+        compact.put("Pest Items", 0L);
+        compact.put("Pets", 0L);
+        compact.put("Misc Drops", 0L);
+        compact.put("Visitor", 0L);
+        compact.put("Costs", 0L);
+        compact.put("Others", 0L);
+
+        for (Map.Entry<String, Long> entry : targetCounts.entrySet()) {
+            String name = entry.getKey();
+            long count = entry.getValue();
+            long profit = (long) (getItemPrice(name) * count);
+
+            if (CROPS_SET.contains(name)) {
+                compact.put("Crops", compact.get("Crops") + profit);
+            } else if (PEST_ITEMS_SET.contains(name)) {
+                compact.put("Pest Items", compact.get("Pest Items") + profit);
+            } else if (PETS_SET.contains(name)) {
+                compact.put("Pets", compact.get("Pets") + profit);
+            } else if (MISC_DROPS_SET.contains(name) || name.toLowerCase().startsWith("pet xp (")) {
+                compact.put("Misc Drops", compact.get("Misc Drops") + profit);
+            } else if (name.equals("[Visitor] Visitor Cost") || name.equals("[Spray] Sprayonator")) {
+                compact.put("Costs", compact.get("Costs") + profit);
+            } else if (name.startsWith("[Visitor] ")) {
+                compact.put("Visitor", compact.get("Visitor") + profit);
+            } else if (profit < 0) {
+                compact.put("Costs", compact.get("Costs") + profit);
+            } else {
+                compact.put("Others", compact.get("Others") + profit);
+            }
+        }
+
+        return compact.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .collect(java.util.stream.Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (v1, v2) -> v1,
+                        LinkedHashMap::new));
+    }
+
+    private static ProfitHudSnapshot rebuildHudSnapshot(String mode) {
+        Map<String, Long> targetCounts = getCountsForMode(mode);
+        Map<String, Long> activeDrops = targetCounts.entrySet().stream()
+                .sorted((e1, e2) -> {
+                    double p1 = getItemPrice(e1.getKey()) * e1.getValue();
+                    double p2 = getItemPrice(e2.getKey()) * e2.getValue();
+                    return Double.compare(p2, p1);
+                })
+                .collect(java.util.stream.Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (v1, v2) -> v1,
+                        LinkedHashMap::new));
+
+        long totalProfit = 0L;
+        for (Map.Entry<String, Long> entry : targetCounts.entrySet()) {
+            totalProfit += (long) (getItemPrice(entry.getKey()) * entry.getValue());
+        }
+
+        return new ProfitHudSnapshot(activeDrops, buildCompactDrops(targetCounts), totalProfit);
+    }
+
+    public static ProfitHudSnapshot getHudSnapshot(String mode) {
+        synchronized (profitHudSnapshots) {
+            ProfitHudSnapshot snapshot = profitHudSnapshots.get(mode);
+            if (snapshot == null || dirtyHudModes.contains(mode)) {
+                snapshot = rebuildHudSnapshot(mode);
+                profitHudSnapshots.put(mode, snapshot);
+                dirtyHudModes.remove(mode);
+            }
+            return snapshot;
+        }
+    }
 
     public static void handleChatMessage(Component component) {
         String text = toLegacyText(component);
@@ -538,6 +668,7 @@ public class ProfitManager {
 
         dailyCounts.put(matchedName, dailyCounts.getOrDefault(matchedName, 0L) + finalCount);
         lifetimeCounts.put(matchedName, lifetimeCounts.getOrDefault(matchedName, 0L) + finalCount);
+        markHudDirty("session", "daily", "lifetime");
         saveLifetime();
         saveDaily();
     }
@@ -564,6 +695,7 @@ public class ProfitManager {
         }
         dailyCounts.put(key, dailyCounts.getOrDefault(key, 0L) + totalCount);
         lifetimeCounts.put(key, lifetimeCounts.getOrDefault(key, 0L) + totalCount);
+        markHudDirty("session", "daily", "lifetime");
         saveLifetime();
         saveDaily();
     }
@@ -574,6 +706,7 @@ public class ProfitManager {
         sessionCounts.put(key, sessionCounts.getOrDefault(key, 0L) - coinsSpent);
         dailyCounts.put(key, dailyCounts.getOrDefault(key, 0L) - coinsSpent);
         lifetimeCounts.put(key, lifetimeCounts.getOrDefault(key, 0L) - coinsSpent);
+        markHudDirty("session", "daily", "lifetime");
         saveLifetime();
         saveDaily();
     }
@@ -589,6 +722,7 @@ public class ProfitManager {
         }
         dailyCounts.put(key, dailyCounts.getOrDefault(key, 0L) - coins);
         lifetimeCounts.put(key, lifetimeCounts.getOrDefault(key, 0L) - coins);
+        markHudDirty("session", "daily", "lifetime");
         saveLifetime();
         saveDaily();
     }
@@ -685,37 +819,7 @@ public class ProfitManager {
     }
 
     public static Map<String, Long> getActiveDrops(String mode) {
-        String cacheKey = "active_" + mode;
-        long now = System.currentTimeMillis();
-        if (hudCache.containsKey(cacheKey) && (now - hudCacheTime.getOrDefault(cacheKey, 0L) < HUD_CACHE_VALIDITY_MS)) {
-            return hudCache.get(cacheKey);
-        }
-
-        Map<String, Long> counts;
-        if ("daily".equals(mode)) {
-            counts = dailyCounts;
-        } else if ("lifetime".equals(mode)) {
-            counts = lifetimeCounts;
-        } else {
-            counts = sessionCounts;
-        }
-
-        // Sort by total profit (count * price) descending
-        Map<String, Long> result = counts.entrySet().stream()
-                .sorted((e1, e2) -> {
-                    double p1 = getItemPrice(e1.getKey()) * e1.getValue();
-                    double p2 = getItemPrice(e2.getKey()) * e2.getValue();
-                    return Double.compare(p2, p1);
-                })
-                .collect(java.util.stream.Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (v1, v2) -> v1,
-                        LinkedHashMap::new));
-
-        hudCache.put(cacheKey, result);
-        hudCacheTime.put(cacheKey, now);
-        return result;
+        return getHudSnapshot(mode).activeDrops();
     }
 
     public static Map<String, Long> getCompactDrops() {
@@ -727,57 +831,7 @@ public class ProfitManager {
     }
 
     public static Map<String, Long> getCompactDrops(String mode) {
-        Map<String, Long> compact = new LinkedHashMap<>();
-        compact.put("Crops", 0L);
-        compact.put("Pest Items", 0L);
-        compact.put("Pets", 0L);
-        compact.put("Misc Drops", 0L);
-        compact.put("Visitor", 0L);
-        compact.put("Costs", 0L);
-        compact.put("Others", 0L);
-
-        Map<String, Long> targetCounts;
-        if ("daily".equals(mode)) {
-            targetCounts = dailyCounts;
-        } else if ("lifetime".equals(mode)) {
-            targetCounts = lifetimeCounts;
-        } else {
-            targetCounts = sessionCounts;
-        }
-
-        for (Map.Entry<String, Long> entry : targetCounts.entrySet()) {
-            String name = entry.getKey();
-            long count = entry.getValue();
-            double price = getItemPrice(name);
-            double profit = price * count;
-
-            if (CROPS_SET.contains(name)) {
-                compact.put("Crops", compact.get("Crops") + (long) profit);
-            } else if (PEST_ITEMS_SET.contains(name)) {
-                compact.put("Pest Items", compact.get("Pest Items") + (long) profit);
-            } else if (PETS_SET.contains(name)) {
-                compact.put("Pets", compact.get("Pets") + (long) profit);
-            } else if (MISC_DROPS_SET.contains(name) || name.toLowerCase().startsWith("pet xp (")) {
-                compact.put("Misc Drops", compact.get("Misc Drops") + (long) profit);
-            } else if (name.equals("[Visitor] Visitor Cost") || name.equals("[Spray] Sprayonator")) {
-                compact.put("Costs", compact.get("Costs") + (long) profit);
-            } else if (name.startsWith("[Visitor] ")) {
-                compact.put("Visitor", compact.get("Visitor") + (long) profit);
-            } else if (profit < 0) {
-                compact.put("Costs", compact.get("Costs") + (long) profit);
-            } else {
-                compact.put("Others", compact.get("Others") + (long) profit);
-            }
-        }
-
-        // Sort compact map by value descending
-        return compact.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .collect(java.util.stream.Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (v1, v2) -> v1,
-                        LinkedHashMap::new));
+        return getHudSnapshot(mode).compactDrops();
     }
 
     public static void reset() {
@@ -786,17 +840,20 @@ public class ProfitManager {
         PetXpTracker.reset();
         lastBazaarSprayBuyTime = 0;
         lastPurseBalance = -1;
+        markHudDirty("session");
     }
 
     public static void resetDaily() {
         dailyCounts.clear();
         sprayDailyQuantity = 0;
         lastDailyResetDate = getCurrentDateString();
+        markHudDirty("daily");
         saveDaily();
     }
 
     public static void resetLifetime() {
         lifetimeCounts.clear();
+        markHudDirty("lifetime");
         saveLifetime();
     }
 
@@ -809,21 +866,7 @@ public class ProfitManager {
     }
 
     public static long getTotalProfit(String mode) {
-        double total = 0;
-        Map<String, Long> targetCounts;
-        if ("daily".equals(mode)) {
-            targetCounts = dailyCounts;
-        } else if ("lifetime".equals(mode)) {
-            targetCounts = lifetimeCounts;
-        } else {
-            targetCounts = sessionCounts;
-        }
-
-        for (Map.Entry<String, Long> entry : targetCounts.entrySet()) {
-            double price = getItemPrice(entry.getKey());
-            total += price * entry.getValue();
-        }
-        return (long) total;
+        return getHudSnapshot(mode).totalProfit();
     }
 
     private static void saveLifetime() {
@@ -844,6 +887,7 @@ public class ProfitManager {
             if (data != null) {
                 lifetimeCounts.clear();
                 lifetimeCounts.putAll(data);
+                markHudDirty("lifetime");
             }
         } catch (Exception e) {
             System.err.println("[Ihanuat] Failed to load lifetime profit data: " + e.getMessage());
@@ -879,6 +923,7 @@ public class ProfitManager {
                         dailyCounts.putAll(data.counts);
                     }
                     sprayDailyQuantity = data.sprayQuantity;
+                    markHudDirty("daily");
                 }
             }
         } catch (Exception e) {
@@ -955,6 +1000,14 @@ public class ProfitManager {
     public static void update(net.minecraft.client.Minecraft client) {
         if (client.player == null)
             return;
+
+        if (MacroStateManager.getCurrentState() == MacroState.State.OFF) {
+            long now = System.currentTimeMillis();
+            if (now - lastBazaarFetchTime > 3600000L) {
+                fetchBazaarPrices();
+            }
+            return;
+        }
 
         // 1. Detect which crop increased in inventory
         String detectedCrop = null;
@@ -1113,6 +1166,7 @@ public class ProfitManager {
      */
     public static synchronized void refreshConfiguredPetXpPrices() {
         updateConfiguredPetXpPrices();
+        markHudDirty("session", "daily", "lifetime");
     }
 
     private static double getConfiguredPetXpPrice(MacroConfig.PetInfo info) {
@@ -1156,6 +1210,7 @@ public class ProfitManager {
             }
         }
         updateConfiguredPetXpPrices();
+        markHudDirty("session", "daily", "lifetime");
     }
 
     /**

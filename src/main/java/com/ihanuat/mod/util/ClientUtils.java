@@ -22,9 +22,12 @@ import java.util.List;
 public class ClientUtils {
     private static long lastCommandTime = 0;
     private static final long COMMAND_COOLDOWN_MS = 250;
+    private static final long LOCATION_CACHE_VALIDITY_MS = 100;
     public static final java.util.regex.Pattern COLOR_PATTERN = java.util.regex.Pattern.compile("(?i)§[0-9A-FK-ORZ]");
     public static final java.util.regex.Pattern COMMA_PATTERN = java.util.regex.Pattern.compile(",");
     public static final java.util.regex.Pattern NON_DIGIT_PATTERN = java.util.regex.Pattern.compile("[^0-9]");
+    private static MacroState.Location cachedLocation = MacroState.Location.UNKNOWN;
+    private static long cachedLocationAtMs = 0;
 
     public static String stripColor(String text) {
         if (text == null) return null;
@@ -135,13 +138,21 @@ public class ClientUtils {
             }
         }
 
+        long now = System.currentTimeMillis();
+        if (now - cachedLocationAtMs <= LOCATION_CACHE_VALIDITY_MS) {
+            return cachedLocation;
+        }
+
         Scoreboard scoreboard = client.level.getScoreboard();
         Objective sidebar = scoreboard != null
                 ? scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR)
                 : null;
 
-        if (sidebar == null)
-            return MacroState.Location.LIMBO;
+        if (sidebar == null) {
+            cachedLocation = MacroState.Location.LIMBO;
+            cachedLocationAtMs = now;
+            return cachedLocation;
+        }
 
         boolean hasLobbyItems = false;
         for (int i = 0; i < 9; i++) {
@@ -156,31 +167,27 @@ public class ClientUtils {
         }
 
         if (hasLobbyItems) {
-            return MacroState.Location.LOBBY;
+            cachedLocation = MacroState.Location.LOBBY;
+            cachedLocationAtMs = now;
+            return cachedLocation;
         }
 
-        if (client.getConnection() != null) {
-            Collection<net.minecraft.client.multiplayer.PlayerInfo> players = client.getConnection()
-                    .getListedOnlinePlayers();
-
-            for (net.minecraft.client.multiplayer.PlayerInfo info : players) {
-                String name = "";
-                if (info.getTabListDisplayName() != null) {
-                    name = info.getTabListDisplayName().getString();
-                } else if (info.getProfile() != null) {
-                    name = String.valueOf(info.getProfile());
-                }
-
-                String clean = stripColor(name).trim();
-                if (clean.contains("Area: Garden"))
-                    return MacroState.Location.GARDEN;
-                if (clean.contains("Area:")) {
-                    return MacroState.Location.HUB;
-                }
+        for (String line : TabListCache.getTabLines(client)) {
+            if (line.contains("Area: Garden")) {
+                cachedLocation = MacroState.Location.GARDEN;
+                cachedLocationAtMs = now;
+                return cachedLocation;
+            }
+            if (line.contains("Area:")) {
+                cachedLocation = MacroState.Location.HUB;
+                cachedLocationAtMs = now;
+                return cachedLocation;
             }
         }
 
-        return MacroState.Location.HUB;
+        cachedLocation = MacroState.Location.HUB;
+        cachedLocationAtMs = now;
+        return cachedLocation;
     }
 
     public static long getContestRemainingMs(Minecraft client) {
