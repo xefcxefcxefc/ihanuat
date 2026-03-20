@@ -15,6 +15,7 @@ import net.minecraft.client.Minecraft;
 import com.ihanuat.mod.util.ClientUtils;
 
 public class ProfitManager {
+    private static final long MAX_CULTIVATING_DELTA = 10_000L;
     private static final Map<String, Long> sessionCounts = new LinkedHashMap<>();
     private static final Map<String, Long> dailyCounts = new LinkedHashMap<>();
     private static final Map<String, Long> lifetimeCounts = new LinkedHashMap<>();
@@ -818,10 +819,7 @@ public class ProfitManager {
             targetCounts = sessionCounts;
         }
 
-        boolean skipPurse = MacroConfig.excludePurseProfit && "session".equals(mode);
-
         for (Map.Entry<String, Long> entry : targetCounts.entrySet()) {
-            if (skipPurse && "Purse".equals(entry.getKey())) continue;
             double price = getItemPrice(entry.getKey());
             total += price * entry.getValue();
         }
@@ -1009,7 +1007,7 @@ public class ProfitManager {
             if (newValue != -1) {
                 if (lastCultivatingValue != -1 && newValue > lastCultivatingValue) {
                     long delta = newValue - lastCultivatingValue;
-                    if (currentFarmedCrop != null) {
+                    if (delta <= MAX_CULTIVATING_DELTA && currentFarmedCrop != null) {
                         if (currentFarmedCrop.equalsIgnoreCase("Wheat")
                                 || currentFarmedCrop.equalsIgnoreCase("Seeds")) {
                             // Ratio 1 Wheat : 1.5 Seeds (Total 2.5)
@@ -1022,6 +1020,8 @@ public class ProfitManager {
                         } else {
                             addDrop(currentFarmedCrop, delta);
                         }
+                    } else if (delta > MAX_CULTIVATING_DELTA && MacroConfig.showDebug) {
+                        ClientUtils.sendDebugMessage(client, "Dismissed large cultivating delta: +" + delta);
                     }
                 }
                 lastCultivatingValue = newValue;

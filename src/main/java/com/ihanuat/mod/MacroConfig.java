@@ -1,6 +1,7 @@
 package com.ihanuat.mod;
 
 import com.google.gson.Gson;
+import java.util.concurrent.locks.ReentrantLock;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import java.io.File;
@@ -67,8 +68,7 @@ public class MacroConfig {
     public static final int DEFAULT_AOTV_VACUUM_DELAY = 0;
     public static final int DEFAULT_BOOK_THRESHOLD = 7;
     public static final int DEFAULT_ADDITIONAL_RANDOM_DELAY = 0;
-    /** Max random ms added on top of the fixed stash-pickup delay. 0 = off. */
-    public static final int DEFAULT_STASH_MANAGER_OFFSET_MS = 0;
+
     public static final java.util.List<String> DEFAULT_FARM_SCRIPTS = java.util.Arrays.asList(
             "netherwart:1","netherwart:0","sugarcane:classical","sugarcane:sshape",
             "cactus","cocoa","mushroom:1","mushroom:0","pumpkin:1");
@@ -102,9 +102,6 @@ public class MacroConfig {
     public static final boolean DEFAULT_GUI_ONLY_IN_GARDEN = true;
     public static final boolean DEFAULT_BREAK_BLOCKS_BEFORE_AOTV = false;
     public static final boolean DEFAULT_DELAY_PEST_FOR_CROP_FEVER = false;
-
-    /** When true, Purse coin gains are excluded from session profit totals. */
-    public static final boolean DEFAULT_EXCLUDE_PURSE_PROFIT = false;
 
     // Quit Threshold
     public static final double DEFAULT_QUIT_THRESHOLD_HOURS = 0.0;
@@ -189,17 +186,14 @@ public class MacroConfig {
     public static int aotvVacuumDelay = DEFAULT_AOTV_VACUUM_DELAY;
     public static int bookThreshold = DEFAULT_BOOK_THRESHOLD;
     public static int additionalRandomDelay = DEFAULT_ADDITIONAL_RANDOM_DELAY;
-    public static int stashManagerOffsetMs = DEFAULT_STASH_MANAGER_OFFSET_MS;
     public static String restartScript = DEFAULT_RESTART_SCRIPT;
     public static int gardenWarpDelay = DEFAULT_GARDEN_WARP_DELAY;
-    public static int restScriptingTime = DEFAULT_REST_SCRIPTING_TIME;
+    // Dynamic Rest: farming session duration range (minutes)
     public static int restScriptingTimeMin = DEFAULT_REST_SCRIPTING_TIME - DEFAULT_REST_SCRIPTING_TIME_OFFSET;
     public static int restScriptingTimeMax = DEFAULT_REST_SCRIPTING_TIME + DEFAULT_REST_SCRIPTING_TIME_OFFSET;
-    public static int restScriptingTimeOffset = DEFAULT_REST_SCRIPTING_TIME_OFFSET;
-    public static int restBreakTime = DEFAULT_REST_BREAK_TIME;
+    // Dynamic Rest: break duration range (minutes)
     public static int restBreakTimeMin = DEFAULT_REST_BREAK_TIME - DEFAULT_REST_BREAK_TIME_OFFSET;
     public static int restBreakTimeMax = DEFAULT_REST_BREAK_TIME + DEFAULT_REST_BREAK_TIME_OFFSET;
-    public static int restBreakTimeOffset = DEFAULT_REST_BREAK_TIME_OFFSET;
     public static boolean enablePlotTpRewarp = DEFAULT_ENABLE_PLOT_TP_REWARP;
     public static boolean holdWUntilWall = DEFAULT_HOLD_W_UNTIL_WALL;
     public static String plotTpNumber = DEFAULT_PLOT_TP_NUMBER;
@@ -222,7 +216,6 @@ public class MacroConfig {
     public static boolean guiOnlyInGarden = DEFAULT_GUI_ONLY_IN_GARDEN;
     public static boolean breakBlocksBeforeAotv = DEFAULT_BREAK_BLOCKS_BEFORE_AOTV;
     public static boolean delayPestForCropFever = DEFAULT_DELAY_PEST_FOR_CROP_FEVER;
-    public static boolean excludePurseProfit = DEFAULT_EXCLUDE_PURSE_PROFIT;
     public static double quitThresholdHours = DEFAULT_QUIT_THRESHOLD_HOURS;
     public static boolean forceQuitMinecraft = DEFAULT_FORCE_QUIT_MINECRAFT;
     public static java.util.List<String> petXpTrackedPets = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
@@ -263,7 +256,7 @@ public class MacroConfig {
     public static double rewarpEndZ = 0;
     public static boolean rewarpEndPosSet = false;
     public static boolean armorSwapVisitor = false;
-    public static int[][] clickGuiPanelPositions = new int[13][3];
+    public static int[][] clickGuiPanelPositions = new int[14][3];
     public static int themePanelBg     = 0xF0101018;
     public static int themePanelHeader = 0xFF18182C;
     public static int themeAccent      = 0xFF5050A0;
@@ -297,6 +290,18 @@ public class MacroConfig {
     public static int hudStateAutosellingColor  = DEFAULT_HUD_STATE_AUTOSELLING_COLOR;
     public static int hudStateSprayingColor     = DEFAULT_HUD_STATE_SPRAYING_COLOR;
     public static int hudDynamicRestBgColor     = 0x000000;  // background color for the dynamic rest screen
+
+    // ── Helper panel theme colors ──────────────────────────────────────────
+    public static final int DEFAULT_HELPER_BG_COLOR    = 0xF0101018; // matches default panel bg
+    public static final int DEFAULT_HELPER_HDR_COLOR   = 0xFF18182C; // matches default panel header
+    public static final int DEFAULT_HELPER_TXT1_COLOR  = 0xFFCCCCCC; // primary text
+    public static final int DEFAULT_HELPER_TXT2_COLOR  = 0xFF8888BB; // highlighted text (blurple-tinted)
+    public static final int DEFAULT_HELPER_TXT3_COLOR  = 0xFF666677; // dim/secondary text
+    public static int helperBgColor   = DEFAULT_HELPER_BG_COLOR;
+    public static int helperHdrColor  = DEFAULT_HELPER_HDR_COLOR;
+    public static int helperTxt1Color = DEFAULT_HELPER_TXT1_COLOR;
+    public static int helperTxt2Color = DEFAULT_HELPER_TXT2_COLOR;
+    public static int helperTxt3Color = DEFAULT_HELPER_TXT3_COLOR;
 
     // ── Color helpers ─────────────────────────────────────────────────────────
 
@@ -406,6 +411,8 @@ public class MacroConfig {
     private static final File DEFAULTS_FILE =
             FabricLoader.getInstance().getConfigDir().resolve("ihanuat_defaults.json").toFile();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    /** Guards concurrent save() calls from different threads (game thread + worker thread). */
+    private static final ReentrantLock SAVE_LOCK = new ReentrantLock();
 
     /** Writes the factory-default ConfigData to disk if the file does not yet exist. */
     public static void saveDefaultsIfAbsent() {
@@ -496,17 +503,12 @@ public class MacroConfig {
         d.aotvVacuumDelay = aotvVacuumDelay;
         d.bookThreshold = bookThreshold;
         d.additionalRandomDelay = additionalRandomDelay;
-        d.stashManagerOffsetMs = stashManagerOffsetMs;
         d.restartScript = restartScript;
         d.gardenWarpDelay = gardenWarpDelay;
-        d.restScriptingTime = restScriptingTime;
         d.restScriptingTimeMin = restScriptingTimeMin;
         d.restScriptingTimeMax = restScriptingTimeMax;
-        d.restScriptingTimeOffset = restScriptingTimeOffset;
-        d.restBreakTime = restBreakTime;
         d.restBreakTimeMin = restBreakTimeMin;
         d.restBreakTimeMax = restBreakTimeMax;
-        d.restBreakTimeOffset = restBreakTimeOffset;
         d.enablePlotTpRewarp = enablePlotTpRewarp;
         d.holdWUntilWall = holdWUntilWall;
         d.plotTpNumber = plotTpNumber;
@@ -547,7 +549,6 @@ public class MacroConfig {
         d.guiOnlyInGarden = guiOnlyInGarden;
         d.breakBlocksBeforeAotv = breakBlocksBeforeAotv;
         d.delayPestForCropFever = delayPestForCropFever;
-        d.excludePurseProfit = excludePurseProfit;
         d.quitThresholdHours = quitThresholdHours;
         d.forceQuitMinecraft = forceQuitMinecraft;
         d.petXpTrackedPets = new java.util.ArrayList<>(petXpTrackedPets);
@@ -559,6 +560,11 @@ public class MacroConfig {
         d.sessionProfitHudScale = sessionProfitHudScale; d.showSessionProfitHud = showSessionProfitHud;
         d.lifetimeHudX = lifetimeHudX; d.lifetimeHudY = lifetimeHudY;
         d.lifetimeHudScale = lifetimeHudScale; d.showLifetimeHud = showLifetimeHud;
+        d.helperBgColor   = helperBgColor;
+        d.helperHdrColor  = helperHdrColor;
+        d.helperTxt1Color = helperTxt1Color;
+        d.helperTxt2Color = helperTxt2Color;
+        d.helperTxt3Color = helperTxt3Color;
         d.lifetimeAccumulated = lifetimeAccumulated;
         d.todayDateStr = todayDateStr;
         d.todayAccumulatedMs = todayAccumulatedMs;
@@ -577,8 +583,10 @@ public class MacroConfig {
         d.hudStateAutosellingColorHex = toHexString(hudStateAutosellingColor);
         d.hudStateSprayingColorHex    = toHexString(hudStateSprayingColor);
         d.hudDynamicRestBgColor       = hudDynamicRestBgColor;
+        SAVE_LOCK.lock();
         try (FileWriter w = new FileWriter(CONFIG_FILE)) { GSON.toJson(d, w); }
         catch (Exception e) { e.printStackTrace(); }
+        finally { SAVE_LOCK.unlock(); }
     }
 
     public static void load() {
@@ -621,22 +629,28 @@ public class MacroConfig {
             equipmentSwapDelay = d.equipmentSwapDelay;
             rodSwapDelay = d.rodSwapDelay;
             bookCombineDelay = d.bookCombineDelay;
-            wardrobePostSwapDelay = Math.max(0, Math.min(500, d.wardrobePostSwapDelay));
+            wardrobePostSwapDelay = Math.max(0, Math.min(2000, d.wardrobePostSwapDelay));
             wardrobeAotvDelay = Math.max(0, Math.min(1000, d.wardrobeAotvDelay));
             aotvVacuumDelay = Math.max(0, Math.min(1000, d.aotvVacuumDelay));
             bookThreshold = d.bookThreshold;
             additionalRandomDelay = d.additionalRandomDelay;
-            stashManagerOffsetMs = Math.max(0, Math.min(250, d.stashManagerOffsetMs));
             if (d.restartScript != null && !d.restartScript.isBlank()) restartScript = d.restartScript;
             gardenWarpDelay = d.gardenWarpDelay;
-            restScriptingTime = d.restScriptingTime;
             if (d.restScriptingTimeMin != 0) restScriptingTimeMin = d.restScriptingTimeMin;
             if (d.restScriptingTimeMax != 0) restScriptingTimeMax = d.restScriptingTimeMax;
-            restScriptingTimeOffset = d.restScriptingTimeOffset;
-            restBreakTime = d.restBreakTime;
             if (d.restBreakTimeMin != 0) restBreakTimeMin = d.restBreakTimeMin;
             if (d.restBreakTimeMax != 0) restBreakTimeMax = d.restBreakTimeMax;
-            restBreakTimeOffset = d.restBreakTimeOffset;
+            // Legacy migration: if only the old base+offset fields were saved, derive min/max from them
+            if (d.restScriptingTimeMin == 0 && d.restScriptingTimeMax == 0 && d.restScriptingTime != 0) {
+                int off = d.restScriptingTimeOffset > 0 ? d.restScriptingTimeOffset : 0;
+                restScriptingTimeMin = Math.max(1, d.restScriptingTime - off);
+                restScriptingTimeMax = d.restScriptingTime + off;
+            }
+            if (d.restBreakTimeMin == 0 && d.restBreakTimeMax == 0 && d.restBreakTime != 0) {
+                int off = d.restBreakTimeOffset > 0 ? d.restBreakTimeOffset : 0;
+                restBreakTimeMin = Math.max(1, d.restBreakTime - off);
+                restBreakTimeMax = d.restBreakTime + off;
+            }
             enablePlotTpRewarp = d.enablePlotTpRewarp;
             holdWUntilWall = d.holdWUntilWall;
             if (d.plotTpNumber != null) plotTpNumber = d.plotTpNumber;
@@ -676,7 +690,6 @@ public class MacroConfig {
             guiOnlyInGarden = d.guiOnlyInGarden;
             breakBlocksBeforeAotv = d.breakBlocksBeforeAotv;
             delayPestForCropFever = d.delayPestForCropFever;
-            excludePurseProfit = d.excludePurseProfit;
             quitThresholdHours = Math.max(0.0, d.quitThresholdHours);
             forceQuitMinecraft = d.forceQuitMinecraft;
             if (d.petXpTrackedPets != null) petXpTrackedPets = new java.util.ArrayList<>(d.petXpTrackedPets);
@@ -692,6 +705,11 @@ public class MacroConfig {
             lifetimeHudX = d.lifetimeHudX; lifetimeHudY = d.lifetimeHudY;
             lifetimeHudScale = d.lifetimeHudScale > 0 ? d.lifetimeHudScale : DEFAULT_LIFETIME_HUD_SCALE;
             showLifetimeHud = d.showLifetimeHud;
+            if (d.helperBgColor   != 0) helperBgColor   = d.helperBgColor;
+            if (d.helperHdrColor  != 0) helperHdrColor  = d.helperHdrColor;
+            if (d.helperTxt1Color != 0) helperTxt1Color = d.helperTxt1Color;
+            if (d.helperTxt2Color != 0) helperTxt2Color = d.helperTxt2Color;
+            if (d.helperTxt3Color != 0) helperTxt3Color = d.helperTxt3Color;
             lifetimeAccumulated = sanitizeLifetimeAccumulated(d.lifetimeAccumulated);
             shouldRewriteConfig = lifetimeAccumulated != Math.max(0L, d.lifetimeAccumulated);
             todayDateStr = d.todayDateStr != null ? d.todayDateStr : "";
@@ -807,17 +825,18 @@ public class MacroConfig {
         int aotvVacuumDelay = DEFAULT_AOTV_VACUUM_DELAY;
         int bookThreshold = DEFAULT_BOOK_THRESHOLD;
         int additionalRandomDelay = DEFAULT_ADDITIONAL_RANDOM_DELAY;
-        int stashManagerOffsetMs = DEFAULT_STASH_MANAGER_OFFSET_MS;
         String restartScript = DEFAULT_RESTART_SCRIPT;
         int gardenWarpDelay = DEFAULT_GARDEN_WARP_DELAY;
-        int restScriptingTime = DEFAULT_REST_SCRIPTING_TIME;
+        // Legacy fields kept for migration from old configs
+        int restScriptingTime = 0;
+        int restScriptingTimeOffset = 0;
+        int restBreakTime = 0;
+        int restBreakTimeOffset = 0;
+        // Primary fields
         int restScriptingTimeMin = 0;
         int restScriptingTimeMax = 0;
-        int restScriptingTimeOffset = DEFAULT_REST_SCRIPTING_TIME_OFFSET;
-        int restBreakTime = DEFAULT_REST_BREAK_TIME;
         int restBreakTimeMin = 0;
         int restBreakTimeMax = 0;
-        int restBreakTimeOffset = DEFAULT_REST_BREAK_TIME_OFFSET;
         boolean enablePlotTpRewarp = DEFAULT_ENABLE_PLOT_TP_REWARP;
         boolean holdWUntilWall = DEFAULT_HOLD_W_UNTIL_WALL;
         String plotTpNumber = DEFAULT_PLOT_TP_NUMBER;
@@ -827,7 +846,7 @@ public class MacroConfig {
         double rewarpEndX = 0, rewarpEndY = 0, rewarpEndZ = 0;
         boolean rewarpEndPosSet = false;
         boolean armorSwapVisitor = false;
-        int[][] clickGuiPanelPositions = new int[13][3];
+        int[][] clickGuiPanelPositions = new int[14][3];
         int themePanelBg     = 0xF0101018;
         int themePanelHeader = 0xFF18182C;
         int themeAccent      = 0xFF5050A0;
@@ -856,7 +875,6 @@ public class MacroConfig {
         boolean guiOnlyInGarden = DEFAULT_GUI_ONLY_IN_GARDEN;
         boolean breakBlocksBeforeAotv = DEFAULT_BREAK_BLOCKS_BEFORE_AOTV;
         boolean delayPestForCropFever = DEFAULT_DELAY_PEST_FOR_CROP_FEVER;
-        boolean excludePurseProfit = DEFAULT_EXCLUDE_PURSE_PROFIT;
         double quitThresholdHours = DEFAULT_QUIT_THRESHOLD_HOURS;
         boolean forceQuitMinecraft = DEFAULT_FORCE_QUIT_MINECRAFT;
         java.util.List<String> petXpTrackedPets = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
@@ -872,6 +890,11 @@ public class MacroConfig {
         int lifetimeHudX = DEFAULT_LIFETIME_HUD_X, lifetimeHudY = DEFAULT_LIFETIME_HUD_Y;
         float lifetimeHudScale = DEFAULT_LIFETIME_HUD_SCALE;
         boolean showLifetimeHud = DEFAULT_SHOW_LIFETIME_HUD;
+        int helperBgColor   = 0;
+        int helperHdrColor  = 0;
+        int helperTxt1Color = 0;
+        int helperTxt2Color = 0;
+        int helperTxt3Color = 0;
         long lifetimeAccumulated = 0;
         String todayDateStr = "";
         long todayAccumulatedMs = 0;

@@ -11,12 +11,21 @@ public class PestPrepSwapManager {
     public static volatile boolean prepSwappedForCurrentPestCycle = false;
     public static volatile boolean isPrepSwapping = false;
 
+    private static boolean hasAnyPrepSwapActionEnabled() {
+        return MacroConfig.autoEquipment || MacroConfig.autoWardrobePest || MacroConfig.autoRodPestCd;
+    }
+
     public static void resetState() {
         prepSwappedForCurrentPestCycle = false;
         isPrepSwapping = false;
     }
 
     public static void updatePrepSwapFlag(int cooldownSeconds, boolean isCleaningInProgress) {
+        if (!hasAnyPrepSwapActionEnabled()) {
+            prepSwappedForCurrentPestCycle = false;
+            return;
+        }
+
         if (MacroConfig.autoEquipment) {
             if (cooldownSeconds > 170 && prepSwappedForCurrentPestCycle && !isCleaningInProgress) {
                 prepSwappedForCurrentPestCycle = false;
@@ -30,6 +39,8 @@ public class PestPrepSwapManager {
 
     public static boolean shouldTriggerPrepSwap(MacroState.State currentState, int cooldownSeconds, 
                                                  boolean isCleaningInProgress, boolean isReturnToLocationActive) {
+        if (!hasAnyPrepSwapActionEnabled())
+            return false;
         if (currentState != MacroState.State.FARMING)
             return false;
         if (cooldownSeconds == -1 || cooldownSeconds < 0)
@@ -45,6 +56,12 @@ public class PestPrepSwapManager {
     }
 
     public static void triggerPrepSwap(Minecraft client) {
+        if (!hasAnyPrepSwapActionEnabled()) {
+            prepSwappedForCurrentPestCycle = false;
+            isPrepSwapping = false;
+            return;
+        }
+
         prepSwappedForCurrentPestCycle = true;
         isPrepSwapping = true;
         ClientUtils.sendDebugMessage(client, "Pest cooldown detected. Triggering prep-swap...");
