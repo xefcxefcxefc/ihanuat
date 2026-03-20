@@ -395,7 +395,7 @@ public class ClientUtils {
                     return;
 
                 long now = System.currentTimeMillis();
-                if (now - lastRetry >= 5000) {
+                if (now - lastRetry >= 500) {
                     retryCount++;
                     sendDebugMessage(client,
                             "[Debug] Wardrobe GUI not detected after " + (now - start)
