@@ -73,7 +73,7 @@ public class MacroConfig {
             "netherwart:1","netherwart:0","sugarcane:classical","sugarcane:sshape",
             "cactus","cocoa","mushroom:1","mushroom:0","pumpkin:1");
     public static final String DEFAULT_RESTART_SCRIPT = "netherwart:1";
-    public static final int DEFAULT_GARDEN_WARP_DELAY = 1000;
+
     public static final int DEFAULT_REST_SCRIPTING_TIME = 30;
     public static final int DEFAULT_REST_SCRIPTING_TIME_OFFSET = 3;
     public static final int DEFAULT_REST_BREAK_TIME = 20;
@@ -93,7 +93,7 @@ public class MacroConfig {
             "Fruit Bowl","Farming Exp Boost","Sunder VI");
     public static final String DEFAULT_DROP_JUNK_PLOT_TP = "0";
     public static final int DEFAULT_JUNK_THRESHOLD = 3;
-    public static final int DEFAULT_JUNK_ITEM_DROP_DELAY = 300;
+
     // Kept for backward-compat (loaded/saved) but no longer shown in UI
     public static final boolean DEFAULT_SHOW_DEBUG = false;
     public static final boolean DEFAULT_LOG_DEBUG_TO_FILE = false;
@@ -187,7 +187,6 @@ public class MacroConfig {
     public static int bookThreshold = DEFAULT_BOOK_THRESHOLD;
     public static int additionalRandomDelay = DEFAULT_ADDITIONAL_RANDOM_DELAY;
     public static String restartScript = DEFAULT_RESTART_SCRIPT;
-    public static int gardenWarpDelay = DEFAULT_GARDEN_WARP_DELAY;
     // Dynamic Rest: farming session duration range (minutes)
     public static int restScriptingTimeMin = DEFAULT_REST_SCRIPTING_TIME - DEFAULT_REST_SCRIPTING_TIME_OFFSET;
     public static int restScriptingTimeMax = DEFAULT_REST_SCRIPTING_TIME + DEFAULT_REST_SCRIPTING_TIME_OFFSET;
@@ -208,7 +207,6 @@ public class MacroConfig {
     public static java.util.List<String> junkItems = new java.util.ArrayList<>(DEFAULT_JUNK_ITEMS);
     public static String dropJunkPlotTp = DEFAULT_DROP_JUNK_PLOT_TP;
     public static int junkThreshold = DEFAULT_JUNK_THRESHOLD;
-    public static int junkItemDropDelay = DEFAULT_JUNK_ITEM_DROP_DELAY;
     public static boolean showDebug = DEFAULT_SHOW_DEBUG;
     public static boolean logDebugToFile = DEFAULT_LOG_DEBUG_TO_FILE;
     public static boolean autoRecoverUnexpectedDisconnect = DEFAULT_AUTO_RECOVER_UNEXPECTED_DISCONNECT;
@@ -504,7 +502,6 @@ public class MacroConfig {
         d.bookThreshold = bookThreshold;
         d.additionalRandomDelay = additionalRandomDelay;
         d.restartScript = restartScript;
-        d.gardenWarpDelay = gardenWarpDelay;
         d.restScriptingTimeMin = restScriptingTimeMin;
         d.restScriptingTimeMax = restScriptingTimeMax;
         d.restBreakTimeMin = restBreakTimeMin;
@@ -541,7 +538,6 @@ public class MacroConfig {
         d.junkItems = new java.util.ArrayList<>(junkItems);
         d.dropJunkPlotTp = dropJunkPlotTp;
         d.junkThreshold = junkThreshold;
-        d.junkItemDropDelay = junkItemDropDelay;
         d.showDebug = showDebug;
         d.logDebugToFile = logDebugToFile;
         d.autoRecoverUnexpectedDisconnect = autoRecoverUnexpectedDisconnect;
@@ -635,7 +631,6 @@ public class MacroConfig {
             bookThreshold = d.bookThreshold;
             additionalRandomDelay = d.additionalRandomDelay;
             if (d.restartScript != null && !d.restartScript.isBlank()) restartScript = d.restartScript;
-            gardenWarpDelay = d.gardenWarpDelay;
             if (d.restScriptingTimeMin != 0) restScriptingTimeMin = d.restScriptingTimeMin;
             if (d.restScriptingTimeMax != 0) restScriptingTimeMax = d.restScriptingTimeMax;
             if (d.restBreakTimeMin != 0) restBreakTimeMin = d.restBreakTimeMin;
@@ -681,7 +676,6 @@ public class MacroConfig {
             if (d.junkItems != null) junkItems = new java.util.ArrayList<>(d.junkItems);
             if (d.dropJunkPlotTp != null) dropJunkPlotTp = d.dropJunkPlotTp;
             junkThreshold = d.junkThreshold;
-            junkItemDropDelay = d.junkItemDropDelay;
             showDebug = d.showDebug;
             logDebugToFile = d.logDebugToFile;
             if (!logDebugToFile) DebugLogger.getInstance().close();
@@ -826,7 +820,6 @@ public class MacroConfig {
         int bookThreshold = DEFAULT_BOOK_THRESHOLD;
         int additionalRandomDelay = DEFAULT_ADDITIONAL_RANDOM_DELAY;
         String restartScript = DEFAULT_RESTART_SCRIPT;
-        int gardenWarpDelay = DEFAULT_GARDEN_WARP_DELAY;
         // Legacy fields kept for migration from old configs
         int restScriptingTime = 0;
         int restScriptingTimeOffset = 0;
@@ -867,7 +860,6 @@ public class MacroConfig {
         java.util.List<String> junkItems = new java.util.ArrayList<>(DEFAULT_JUNK_ITEMS);
         String dropJunkPlotTp = DEFAULT_DROP_JUNK_PLOT_TP;
         int junkThreshold = DEFAULT_JUNK_THRESHOLD;
-        int junkItemDropDelay = DEFAULT_JUNK_ITEM_DROP_DELAY;
         boolean showDebug = DEFAULT_SHOW_DEBUG;
         boolean logDebugToFile = DEFAULT_LOG_DEBUG_TO_FILE;
         boolean autoRecoverUnexpectedDisconnect = DEFAULT_AUTO_RECOVER_UNEXPECTED_DISCONNECT;

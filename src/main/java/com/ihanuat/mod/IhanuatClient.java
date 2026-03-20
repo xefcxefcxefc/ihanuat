@@ -469,6 +469,14 @@ public class IhanuatClient implements ClientModInitializer {
                     hasPendingStash = false;
                 }
 
+                // If /pickupstash returns "Unknown command", we've been warped out of
+                // Skyblock (e.g. to lobby/limbo). Stop the sequence immediately so it
+                // doesn't keep firing the command in a non-SB world.
+                if (lowerText.contains("unknown command") && lowerText.contains("pickupstash")) {
+                    isPickingUpStash = false;
+                    hasPendingStash = false;
+                }
+
                 ProfitManager.handleChatMessage(message);
                 PestManager.handlePhillipMessage(Minecraft.getInstance(), text);
                 com.ihanuat.mod.modules.CropFeverManager.handleChatMessage(Minecraft.getInstance(), plainText);

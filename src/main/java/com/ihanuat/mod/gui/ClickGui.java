@@ -452,20 +452,12 @@ public class ClickGui extends Screen {
             MacroConfig.rodSwapDelay = v;
             save();
         }, "ms"));
-        p.add(slider("Garden Warp", "gardenWarpDelay", 0, 3000, () -> MacroConfig.gardenWarpDelay, v -> {
-            MacroConfig.gardenWarpDelay = v;
-            save();
-        }, "ms"));
         p.add(slider("Pest Chat", "pestChatTriggerDelay", 0, 3000, () -> MacroConfig.pestChatTriggerDelay, v -> {
             MacroConfig.pestChatTriggerDelay = v;
             save();
         }, "ms"));
         p.add(slider("Book Combine", "bookCombineDelay", 100, 2000, () -> MacroConfig.bookCombineDelay, v -> {
             MacroConfig.bookCombineDelay = v;
-            save();
-        }, "ms"));
-        p.add(slider("Junk Drop", "junkItemDropDelay", 0, 1000, () -> MacroConfig.junkItemDropDelay, v -> {
-            MacroConfig.junkItemDropDelay = v;
             save();
         }, "ms"));
         p.add(slider("Autosell Click", "autosellClickDelay", 100, 2000, () -> MacroConfig.autosellClickDelay, v -> {
@@ -1041,19 +1033,17 @@ public class ClickGui extends Screen {
                 "Set webhook URL in QOL panel. First match wins.",
             };
             case "delays" -> new String[]{
-                "Rand Delay — Extra random ms added on top of every action.",
-                "Rotation — Time spent looking at the crop before farming.",
-                "GUI Click — Delay between each click in menus.",
-                "Equip Swap — Pause after swapping equipment loadout.",
-                "Rod Swap — Pause after swapping the fishing rod.",
-                "Garden Warp — Wait time after /warp garden.",
-                "Pest Chat — Delay before reacting to a pest chat message.",
-                "Book Combine — Pause between anvil clicks when combining.",
-                "Junk Drop — Delay between each dropped junk item.",
-                "Autosell Click — Delay between Booster Cookie clicks.",
-                "Wardrobe Post-Swap — Wait after wardrobe swap (non-AOTV path).",
-                "Wardrobe AOTV — Wait after wardrobe swap on the AOTV path.",
-                "AOTV Vacuum — Wait for the vacuum effect before AOTV fires.",
+                "Rand Delay — Extra random ms added on top of every timed action via getRandomizedDelay(). Acts as a global humanization jitter across most sequences.",
+                "Rotation — How long the macro spends rotating to look at the crop before it starts farming. Higher values look more human but slow cycle time.",
+                "GUI Click — Throttle between each simulated click inside menus (wardrobe, anvil, George, junk drop UI). Shared across all GUI interactions.",
+                "Equip Swap — Pause after swapping your Equipment loadout slot. Gives the server time to apply the new loadout before the next action.",
+                "Rod Swap — Pause after switching to the fishing rod. Only applies when Auto Rod is enabled (pest CD / pest spawn / return to farm triggers).",
+                "Pest Chat — How long to wait after a pest chat message before the macro reacts and begins the pest clean sequence. Useful for letting the chat settle.",
+                "Book Combine — Throttle between each simulated click at the anvil during book combining. Keep this above ~150ms to avoid missed clicks.",
+                "Autosell Click — Throttle between each Booster Cookie menu click during autosell. Keep above 100ms to avoid the server dropping clicks.",
+                "Wardrobe Post-Swap — Wait after the wardrobe GUI closes on the non-AOTV path. Increase this if the macro resumes farming before armor is fully equipped.",
+                "Wardrobe AOTV — Wait after the wardrobe GUI closes on the AOTV path. Usually shorter since AOTV fires immediately after; tweak if you get swap timing issues.",
+                "AOTV Vacuum — Wait between triggering the AOTV vacuum sweep and actually firing the AOTV teleport. Too low and the vacuum misses pests before the warp.",
             };
             case "dynamicrest" -> new String[]{
                 "Farming Min/Max — Randomly pick a farming session length in this minute range.",
