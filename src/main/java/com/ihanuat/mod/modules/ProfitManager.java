@@ -818,10 +818,7 @@ public class ProfitManager {
             targetCounts = sessionCounts;
         }
 
-        boolean skipPurse = MacroConfig.excludePurseProfit && "session".equals(mode);
-
         for (Map.Entry<String, Long> entry : targetCounts.entrySet()) {
-            if (skipPurse && "Purse".equals(entry.getKey())) continue;
             double price = getItemPrice(entry.getKey());
             total += price * entry.getValue();
         }
